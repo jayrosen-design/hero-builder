@@ -23,6 +23,7 @@ type GameControls = {
 };
 
 export const useGameControls = (superAbility: SuperAbility | null) => {
+  // Initialize with default values
   const [controls, setControls] = useState<GameControls>({
     position: { x: 0, y: 0, z: 0 },
     rotation: 0,
@@ -216,6 +217,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         let xDelta = 0;
         let zDelta = 0;
         
+        // Adjust movement direction based on key presses
         if (forward) {
           zDelta -= moveSpeed;
           newRotation = 0;
@@ -261,7 +263,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           rotation: newRotation,
         };
       });
-    }, 16);
+    }, 16); // ~60fps update rate
     
     return () => clearInterval(moveInterval);
   }, [superAbility]);

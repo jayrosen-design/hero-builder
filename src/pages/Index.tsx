@@ -23,6 +23,10 @@ const Index = () => {
 
   useEffect(() => {
     console.log("Index component mounted");
+    
+    // Force a resize event to ensure Three.js canvas renders correctly on initial load
+    window.dispatchEvent(new Event('resize'));
+    
     return () => console.log("Index component unmounted");
   }, []);
 
@@ -37,7 +41,9 @@ const Index = () => {
       setShowTransition(false);
       
       // Force a resize event to ensure Three.js canvas renders correctly
-      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
     }, 700);
   };
 
@@ -48,7 +54,9 @@ const Index = () => {
       setGameMode(false);
       setShowTransition(false);
       // Force a resize event to ensure Three.js canvas renders correctly
-      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
     }, 700);
   };
 

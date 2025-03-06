@@ -42,72 +42,72 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const handleStartGame = () => {
     console.log('Starting game from GameScreen, received button click');
     
-    // First reset controls, then update state
-    resetControls();
-    setGameStarted(true);
+    // First hide controls, then update game state
     setShowControls(false);
     
-    toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
-    
-    // Force rerender of the game scene
+    // Reset controls and start game after a short delay
     setTimeout(() => {
-      console.log("Forcing game scene refresh");
+      resetControls();
+      setGameStarted(true);
+      console.log("Game started, gameStarted:", true);
+      
+      // Force rerender of the game scene
       window.dispatchEvent(new Event('resize'));
+      
+      toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
     }, 100);
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-b from-sky-400 to-sky-600">
-      <div className="relative flex-1 w-full overflow-hidden">
-        {/* Character model container - explicitly set dimensions */}
-        <div className="absolute inset-0 w-full h-full">
-          <CharacterModel
-            character={character}
-            isGameMode={true}
-            isRotating={false}
-            controls={controls}
-            isAbilityActive={controls.isAbilityActive}
-          />
-        </div>
-        
-        {gameStarted && (
-          <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded z-10">
-            <div>X: {controls.position.x.toFixed(2)}</div>
-            <div>Y: {controls.position.y.toFixed(2)}</div>
-            <div>Z: {controls.position.z.toFixed(2)}</div>
-            <div>Rotation: {(controls.rotation * 180 / Math.PI).toFixed(0)}°</div>
-            <div>
-              {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
-            </div>
+    <div className="w-full h-full flex flex-col bg-gradient-to-b from-sky-400 to-sky-600 relative">
+      {/* Always render the character model container, but conditionally pass gameStarted */}
+      <div className="absolute inset-0 w-full h-full z-10">
+        <CharacterModel
+          character={character}
+          isGameMode={true}
+          isRotating={false}
+          controls={controls}
+          isAbilityActive={controls.isAbilityActive}
+        />
+      </div>
+      
+      {gameStarted && (
+        <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded z-30">
+          <div>X: {controls.position.x.toFixed(2)}</div>
+          <div>Y: {controls.position.y.toFixed(2)}</div>
+          <div>Z: {controls.position.z.toFixed(2)}</div>
+          <div>Rotation: {(controls.rotation * 180 / Math.PI).toFixed(0)}°</div>
+          <div>
+            {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
           </div>
-        )}
-        
-        <div className="absolute bottom-4 left-4 z-20">
-          <Button 
-            variant="outline"
-            size="sm"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
-            onClick={() => setShowControls(!showControls)}
-          >
-            Controls
-          </Button>
         </div>
-        
-        <div className="absolute top-4 left-4 z-20">
-          <Button 
-            variant="outline"
-            size="sm"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
-            onClick={onBackToCustomization}
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Customization
-          </Button>
-        </div>
-        
-        <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg text-sm font-medium flex items-center gap-2 z-20">
-          <span>{character.superAbility ? character.superAbility.charAt(0).toUpperCase() + character.superAbility.slice(1) : 'No'} Ability</span>
-          <div className={`w-3 h-3 rounded-full ${controls.isAbilityActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-        </div>
+      )}
+      
+      <div className="absolute bottom-4 left-4 z-30">
+        <Button 
+          variant="outline"
+          size="sm"
+          className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
+          onClick={() => setShowControls(!showControls)}
+        >
+          Controls
+        </Button>
+      </div>
+      
+      <div className="absolute top-4 left-4 z-30">
+        <Button 
+          variant="outline"
+          size="sm"
+          className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
+          onClick={onBackToCustomization}
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Customization
+        </Button>
+      </div>
+      
+      <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg text-sm font-medium flex items-center gap-2 z-30">
+        <span>{character.superAbility ? character.superAbility.charAt(0).toUpperCase() + character.superAbility.slice(1) : 'No'} Ability</span>
+        <div className={`w-3 h-3 rounded-full ${controls.isAbilityActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
       </div>
       
       {showControls && (

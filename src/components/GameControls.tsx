@@ -30,8 +30,9 @@ const GameControls: React.FC<GameControlsProps> = ({
     }
   };
 
-  const handleStartClick = (e) => {
+  const handleStartClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent any default behavior
+    e.stopPropagation(); // Stop event propagation
     console.log('Game controls: Start button clicked, forwarding to parent');
     
     if (typeof onStartGame === 'function') {
@@ -110,7 +111,6 @@ const GameControls: React.FC<GameControlsProps> = ({
       <Button 
         onClick={handleStartClick}
         className="w-full bg-hero-accent hover:bg-hero-accent/90 text-white relative z-30"
-        disabled={false} // Never disable this button
         type="button"
       >
         {gameStarted ? 'Resume Game' : 'Start Game'}
