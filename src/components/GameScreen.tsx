@@ -5,7 +5,7 @@ import { SuperAbility } from '../hooks/useCharacterCustomization';
 import { useGameControls } from '../hooks/useGameControls';
 import CharacterModel from './CharacterModel';
 import GameControls from './GameControls';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 
 interface GameScreenProps {
