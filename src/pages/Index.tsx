@@ -40,7 +40,7 @@ const Index = () => {
     // Force a resize event to ensure Three.js canvas renders correctly
     window.dispatchEvent(new Event('resize'));
     
-    toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
+    toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability. Use mouse to pan camera.");
   };
 
   const handleBackToCustomization = () => {

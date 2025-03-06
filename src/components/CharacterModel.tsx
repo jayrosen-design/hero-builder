@@ -48,7 +48,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     console.log("Setting up Three.js scene, game mode:", isGameMode);
     
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB);
+    scene.background = new THREE.Color(0x87CEEB); // Sky blue background
     sceneRef.current = scene;
     
     const camera = new THREE.PerspectiveCamera(
@@ -58,9 +58,9 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       1000
     );
     
-    // Use the same camera position for both game mode and customization
-    camera.position.set(0, 2, 7);
-    camera.lookAt(0, 1, 0);
+    // Improved camera position for better visibility
+    camera.position.set(0, 1.5, 5); 
+    camera.lookAt(0, 0, 0);
     
     cameraRef.current = camera;
     
@@ -68,24 +68,37 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setClearColor(0x87CEEB, 1);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Improved lighting setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(1, 5, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    directionalLight.position.set(5, 10, 5);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 50;
+    directionalLight.shadow.camera.left = -20;
+    directionalLight.shadow.camera.right = 20;
+    directionalLight.shadow.camera.top = 20;
+    directionalLight.shadow.camera.bottom = -20;
     scene.add(directionalLight);
+    
+    // Add a hemisphere light for more natural lighting
+    const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x3a8c3a, 0.5);
+    scene.add(hemisphereLight);
     
     const characterGroup = new THREE.Group();
     characterRef.current = characterGroup;
     scene.add(characterGroup);
     
-    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    // Improved ground with better visibility
+    const groundGeometry = new THREE.PlaneGeometry(100, 100, 32, 32);
     const groundMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x3a8c3a,
       roughness: 0.8,
@@ -98,16 +111,22 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(ground);
     groundRef.current = ground;
     
-    // Add platform decorations to the scene regardless of mode
+    // Add visible platform decorations to the scene regardless of mode
     const platformMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x8B4513,
       roughness: 0.8,
       metalness: 0.2
     });
     
-    addPlatform(scene, -5, 0, -10, 5, 0.5, 5, platformMaterial);
-    addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
-    addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
+    // Modify platform positions to be more visible from camera angle
+    addPlatform(scene, -5, 0, -5, 5, 0.5, 5, platformMaterial);
+    addPlatform(scene, 5, 2, -5, 5, 0.5, 5, platformMaterial);
+    addPlatform(scene, 0, 4, -10, 5, 0.5, 5, platformMaterial);
+    
+    // Add some decorative elements to help with visual reference
+    addSphere(scene, -8, 0, -8, 1, 0xff0000);
+    addSphere(scene, 8, 0, -8, 1, 0x00ff00);
+    addSphere(scene, 0, 0, -12, 1, 0x0000ff);
     
     // Mouse controls event listeners
     if (allowMouseControls && containerRef.current) {
@@ -266,6 +285,23 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     platform.castShadow = true;
     platform.receiveShadow = true;
     scene.add(platform);
+  }
+  
+  function addSphere(
+    scene: THREE.Scene,
+    x: number,
+    y: number,
+    z: number,
+    radius: number,
+    color: number
+  ) {
+    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    const material = new THREE.MeshStandardMaterial({ color });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(x, y, z);
+    sphere.castShadow = true;
+    sphere.receiveShadow = true;
+    scene.add(sphere);
   }
   
   useEffect(() => {
