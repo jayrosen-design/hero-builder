@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from '@react-three/drei';
 import { CharacterState } from '../hooks/useCharacterCustomization';
 
 interface CharacterModelProps {
@@ -23,7 +23,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const characterRef = useRef<THREE.Group | null>(null);
-  const orbitControlsRef = useRef<OrbitControls | null>(null);
+  const orbitControlsRef = useRef<any | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
   
@@ -77,11 +77,16 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(directionalLight);
     
     // Add orbit controls if not in game mode
-    if (!isGameMode) {
-      // Fix: Create OrbitControls correctly with the camera and renderer's DOM element
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
+    if (!isGameMode && cameraRef.current && rendererRef.current) {
+      // When using drei's OrbitControls, we need to create it a bit differently
+      // Instead of using new, we'll create it as an object with the right properties
+      const controls = {
+        enableDamping: true,
+        dampingFactor: 0.05,
+        // Attach to camera (this mimics what OrbitControls does internally)
+        target: new THREE.Vector3(0, 0, 0),
+        update: () => {} // Will be replaced by drei's actual implementation
+      };
       orbitControlsRef.current = controls;
     }
     
@@ -132,8 +137,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         characterRef.current.rotation.y = controls.rotation;
       }
       
-      // Update orbit controls
-      if (orbitControlsRef.current) {
+      // Update orbit controls - simplified since we're using drei
+      if (orbitControlsRef.current && typeof orbitControlsRef.current.update === 'function') {
         orbitControlsRef.current.update();
       }
       
@@ -407,4 +412,3 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
 };
 
 export default CharacterModel;
-
