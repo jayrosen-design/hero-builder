@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useCharacterCustomization } from '../hooks/useCharacterCustomization';
 import CharacterModel from '../components/CharacterModel';
@@ -31,44 +30,24 @@ const Index = () => {
   }, []);
 
   const handleStartGame = () => {
-    console.log("Starting game transition");
-    setShowTransition(true);
-    
-    // Ensure we transition to game mode after animation completes
-    setTimeout(() => {
-      console.log("Transition timeout completed, setting game mode");
-      setGameMode(true);
-      setShowTransition(false);
-      
-      // Force a resize event to ensure Three.js canvas renders correctly
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 100);
-    }, 700);
+    console.log("Starting game - keeping the same view");
+    // We're keeping the same 3D view and just enabling controls
+    setGameMode(true);
+    // Force a resize event to ensure Three.js canvas renders correctly
+    window.dispatchEvent(new Event('resize'));
   };
 
   const handleBackToCustomization = () => {
     console.log("Going back to customization");
-    setShowTransition(true);
-    setTimeout(() => {
-      setGameMode(false);
-      setShowTransition(false);
-      // Force a resize event to ensure Three.js canvas renders correctly
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 100);
-    }, 700);
+    setGameMode(false);
+    // Force a resize event to ensure Three.js canvas renders correctly
+    window.dispatchEvent(new Event('resize'));
   };
 
   console.log("Index rendering with gameMode:", gameMode, "showTransition:", showTransition, "character:", character);
   
   return (
     <div className="min-h-screen flex flex-col bg-hero-base overflow-hidden">
-      <TransitionOverlay 
-        isVisible={showTransition} 
-        onComplete={() => console.log("Transition overlay complete callback")} 
-      />
-      
       {/* Header */}
       <header className="relative z-10 glass-panel bg-opacity-70 py-4 px-6 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
@@ -108,7 +87,7 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          // Game mode - make sure this takes full height and width
+          // Game mode - full screen game view without transitions
           <div className="w-full h-full flex-1 flex">
             <GameScreen 
               character={character} 

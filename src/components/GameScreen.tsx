@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SuperAbility } from '../hooks/useCharacterCustomization';
@@ -41,12 +42,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const handleStartGame = () => {
     console.log('Starting game from GameScreen, received button click');
     
-    // Keep the 3D view, just update controls
+    // Simply activate the controls without changing the UI
     setShowControls(false);
     resetControls();
     setGameStarted(true);
-    
-    console.log("Game started, gameStarted:", true);
     
     toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
   };
