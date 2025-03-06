@@ -59,12 +59,12 @@ const GameScreen: React.FC<GameScreenProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-b from-sky-400 to-sky-600 relative">
-      {/* Always render the character model container, but conditionally pass gameStarted */}
-      <div className="absolute inset-0 w-full h-full z-10">
+    <div className="w-full h-full flex flex-col relative">
+      {/* Always render the character model container but make it fill the entire screen */}
+      <div className="absolute inset-0 w-full h-full">
         <CharacterModel
           character={character}
-          isGameMode={true}
+          isGameMode={false} // Set to false to use the same view as customizer
           isRotating={false}
           controls={controls}
           isAbilityActive={controls.isAbilityActive}

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { CharacterState } from '../hooks/useCharacterCustomization';
@@ -49,12 +50,10 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       1000
     );
     
-    if (isGameMode) {
-      camera.position.set(0, 5, 10);
-      camera.lookAt(0, 1, 0);
-    } else {
-      camera.position.set(0, 1, 5);
-    }
+    // Use the same camera position for both game mode and customization
+    camera.position.set(0, 2, 7);
+    camera.lookAt(0, 1, 0);
+    
     cameraRef.current = camera;
     
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -91,26 +90,26 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(ground);
     groundRef.current = ground;
     
-    if (isGameMode) {
-      const platformMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x8B4513,
-        roughness: 0.8,
-        metalness: 0.2
-      });
-      
-      addPlatform(scene, -5, 0, -10, 5, 0.5, 5, platformMaterial);
-      addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
-      addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
-    }
+    // Add platform decorations to the scene regardless of mode
+    const platformMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x8B4513,
+      roughness: 0.8,
+      metalness: 0.2
+    });
+    
+    addPlatform(scene, -5, 0, -10, 5, 0.5, 5, platformMaterial);
+    addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
+    addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
     
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
       
-      if (isRotating && !isGameMode && characterRef.current) {
+      if (isRotating && !controls && characterRef.current) {
         characterRef.current.rotation.y += 0.01;
       }
       
-      if (isGameMode && controls && characterRef.current && cameraRef.current) {
+      if (controls && characterRef.current && cameraRef.current) {
+        // Update character position based on controls
         characterRef.current.position.set(
           controls.position.x,
           controls.position.y, 
@@ -118,13 +117,15 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         );
         characterRef.current.rotation.y = controls.rotation;
         
-        const cameraOffset = new THREE.Vector3(0, 5, 10);
+        // Follow the character with camera
+        const cameraOffset = new THREE.Vector3(0, 2, 5); // Camera follows character from behind
         const characterPosition = new THREE.Vector3(
           controls.position.x,
           controls.position.y,
           controls.position.z
         );
         
+        // Position camera to follow character
         cameraRef.current.position.copy(characterPosition).add(cameraOffset);
         cameraRef.current.lookAt(
           controls.position.x,
