@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { useCharacterCustomization } from '../hooks/useCharacterCustomization';
 import CharacterModel from '../components/CharacterModel';
 import CustomizationControls from '../components/CustomizationControls';
-import GameScreen from '../components/GameScreen';
-import TransitionOverlay from '../components/TransitionOverlay';
+import { useGameControls } from '../hooks/useGameControls';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const Index = () => {
   console.log("Index component rendering");
   
-  const [gameMode, setGameMode] = useState(false);
-  const [showTransition, setShowTransition] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const {
     character,
     bodyPartOptions,
@@ -19,6 +21,8 @@ const Index = () => {
     getSelectedAbility,
     updateBodyPartColor,
   } = useCharacterCustomization();
+  
+  const { controls, resetControls } = useGameControls(character.superAbility);
 
   useEffect(() => {
     console.log("Index component mounted");
@@ -31,20 +35,22 @@ const Index = () => {
 
   const handleStartGame = () => {
     console.log("Starting game - keeping the same view");
-    // We're keeping the same 3D view and just enabling controls
-    setGameMode(true);
+    setGameStarted(true);
+    resetControls();
     // Force a resize event to ensure Three.js canvas renders correctly
     window.dispatchEvent(new Event('resize'));
+    
+    toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
   };
 
   const handleBackToCustomization = () => {
     console.log("Going back to customization");
-    setGameMode(false);
+    setGameStarted(false);
     // Force a resize event to ensure Three.js canvas renders correctly
     window.dispatchEvent(new Event('resize'));
   };
 
-  console.log("Index rendering with gameMode:", gameMode, "showTransition:", showTransition, "character:", character);
+  console.log("Index rendering with gameStarted:", gameStarted, "character:", character);
   
   return (
     <div className="min-h-screen flex flex-col bg-hero-base overflow-hidden">
@@ -53,28 +59,29 @@ const Index = () => {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-hero-dark">Hero Platformer</h1>
           <div className="text-sm text-hero-muted">
-            {gameMode ? 'Game Mode' : 'Customization Mode'}
+            {gameStarted ? 'Game Mode' : 'Customization Mode'}
           </div>
         </div>
       </header>
       
-      {/* Main content */}
+      {/* Main content - ALWAYS showing the 3D view */}
       <main className="flex-1 flex">
-        {!gameMode ? (
-          // Customization mode
-          <div className="container mx-auto flex flex-col lg:flex-row gap-8 py-8 px-4">
-            {/* Character preview */}
-            <div className="flex-1 glass-panel rounded-xl overflow-hidden flex items-center justify-center">
-              <div className="relative w-full h-full min-h-[400px]">
-                <CharacterModel 
-                  character={character} 
-                  isRotating={true} 
-                />
-              </div>
+        <div className="container mx-auto flex flex-col lg:flex-row gap-8 py-8 px-4">
+          {/* Character preview - always shown */}
+          <div className="flex-1 glass-panel rounded-xl overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-full min-h-[400px]">
+              <CharacterModel 
+                character={character} 
+                isRotating={!gameStarted}
+                controls={gameStarted ? controls : undefined}
+                isAbilityActive={gameStarted && controls.isAbilityActive}
+              />
             </div>
-            
-            {/* Controls */}
-            <div className="flex-1 flex items-center justify-center">
+          </div>
+          
+          {/* Controls panel - shows customization or game controls */}
+          <div className="flex-1 flex items-center justify-center">
+            {!gameStarted ? (
               <CustomizationControls
                 bodyPartOptions={bodyPartOptions}
                 getSelectedOption={getSelectedOption}
@@ -84,27 +91,61 @@ const Index = () => {
                 setSuperAbility={setSuperAbility}
                 onComplete={handleStartGame}
               />
-            </div>
+            ) : (
+              <div className="glass-panel p-6 rounded-xl w-full max-w-sm">
+                <div className="text-center space-y-4">
+                  <h2 className="text-xl font-semibold">Game Controls</h2>
+                  <p className="text-sm text-hero-muted">
+                    Use WASD or arrow keys to move<br />
+                    SPACE to jump and activate ability
+                  </p>
+                  
+                  {character.superAbility && (
+                    <div className="bg-hero-accent/20 px-3 py-2 rounded-lg text-sm">
+                      <p className="font-medium">Your Ability: {character.superAbility}</p>
+                      <div className="flex items-center justify-center mt-2 gap-2">
+                        <span>Status:</span>
+                        <div className={`w-3 h-3 rounded-full ${controls.isAbilityActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="absolute top-4 left-4 z-30">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
+                      onClick={handleBackToCustomization}
+                    >
+                      <ArrowLeft className="w-4 h-4" /> Back to Customization
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          // Game mode - full screen game view without transitions
-          <div className="w-full h-full flex-1 flex">
-            <GameScreen 
-              character={character} 
-              onBackToCustomization={handleBackToCustomization} 
-            />
-          </div>
-        )}
+        </div>
       </main>
       
-      {/* Footer - only show in customization mode */}
-      {!gameMode && (
-        <footer className="glass-panel py-3 px-6">
-          <div className="container mx-auto text-center text-xs text-hero-muted">
-            <p>Create your custom superhero and test their abilities in the game!</p>
+      {/* Debug info panel when in game mode */}
+      {gameStarted && (
+        <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded z-30">
+          <div>X: {controls.position.x.toFixed(2)}</div>
+          <div>Y: {controls.position.y.toFixed(2)}</div>
+          <div>Z: {controls.position.z.toFixed(2)}</div>
+          <div>Rotation: {(controls.rotation * 180 / Math.PI).toFixed(0)}°</div>
+          <div>
+            {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
           </div>
-        </footer>
+        </div>
       )}
+      
+      {/* Footer - always show */}
+      <footer className="glass-panel py-3 px-6">
+        <div className="container mx-auto text-center text-xs text-hero-muted">
+          <p>{gameStarted ? 'Move your hero with WASD keys!' : 'Create your custom superhero and test their abilities in the game!'}</p>
+        </div>
+      </footer>
     </div>
   );
 };
