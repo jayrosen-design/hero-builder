@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { CharacterState } from '../hooks/useCharacterCustomization';
@@ -29,7 +30,8 @@ const GameControls: React.FC<GameControlsProps> = ({
     }
   };
 
-  const handleStartClick = () => {
+  const handleStartClick = (e) => {
+    e.preventDefault(); // Prevent any default behavior
     console.log('Game controls: Start button clicked, forwarding to parent');
     
     if (typeof onStartGame === 'function') {
@@ -107,8 +109,8 @@ const GameControls: React.FC<GameControlsProps> = ({
       
       <Button 
         onClick={handleStartClick}
-        className="w-full bg-hero-accent hover:bg-hero-accent/90 text-white relative z-20"
-        disabled={gameStarted}
+        className="w-full bg-hero-accent hover:bg-hero-accent/90 text-white relative z-30"
+        disabled={false} // Never disable this button
         type="button"
       >
         {gameStarted ? 'Resume Game' : 'Start Game'}

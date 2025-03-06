@@ -35,6 +35,9 @@ const Index = () => {
       console.log("Transition timeout completed, setting game mode");
       setGameMode(true);
       setShowTransition(false);
+      
+      // Force a resize event to ensure Three.js canvas renders correctly
+      window.dispatchEvent(new Event('resize'));
     }, 700);
   };
 
@@ -44,6 +47,8 @@ const Index = () => {
     setTimeout(() => {
       setGameMode(false);
       setShowTransition(false);
+      // Force a resize event to ensure Three.js canvas renders correctly
+      window.dispatchEvent(new Event('resize'));
     }, 700);
   };
 
@@ -69,6 +74,7 @@ const Index = () => {
       {/* Main content */}
       <main className="flex-1 flex">
         {!gameMode ? (
+          // Customization mode
           <div className="container mx-auto flex flex-col lg:flex-row gap-8 py-8 px-4">
             {/* Character preview */}
             <div className="flex-1 glass-panel rounded-xl overflow-hidden flex items-center justify-center">
@@ -94,7 +100,8 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          <div className="w-full h-full">
+          // Game mode - make sure this takes full height and width
+          <div className="w-full h-full flex-1 flex">
             <GameScreen 
               character={character} 
               onBackToCustomization={handleBackToCustomization} 
