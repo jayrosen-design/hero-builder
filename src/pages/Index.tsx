@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCharacterCustomization } from '../hooks/useCharacterCustomization';
 import CharacterModel from '../components/CharacterModel';
 import CustomizationControls from '../components/CustomizationControls';
@@ -7,6 +6,8 @@ import GameScreen from '../components/GameScreen';
 import TransitionOverlay from '../components/TransitionOverlay';
 
 const Index = () => {
+  console.log("Index component rendering");
+  
   const [gameMode, setGameMode] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const {
@@ -17,6 +18,11 @@ const Index = () => {
     getSelectedOption,
     getSelectedAbility,
   } = useCharacterCustomization();
+
+  useEffect(() => {
+    console.log("Index component mounted");
+    return () => console.log("Index component unmounted");
+  }, []);
 
   const handleStartGame = () => {
     setShowTransition(true);
@@ -34,6 +40,8 @@ const Index = () => {
     }, 700);
   };
 
+  console.log("Index rendering with gameMode:", gameMode, "showTransition:", showTransition);
+  
   return (
     <div className="min-h-screen flex flex-col bg-hero-base overflow-hidden">
       <TransitionOverlay 
