@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SuperAbility } from '../hooks/useCharacterCustomization';
@@ -42,20 +41,14 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const handleStartGame = () => {
     console.log('Starting game from GameScreen, received button click');
     
-    // First hide controls, then update game state
+    // Keep the 3D view, just update controls
     setShowControls(false);
+    resetControls();
+    setGameStarted(true);
     
-    // Reset controls and start game after a short delay
-    setTimeout(() => {
-      resetControls();
-      setGameStarted(true);
-      console.log("Game started, gameStarted:", true);
-      
-      // Force rerender of the game scene
-      window.dispatchEvent(new Event('resize'));
-      
-      toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
-    }, 100);
+    console.log("Game started, gameStarted:", true);
+    
+    toast.info("Game started! Use WASD or arrow keys to move, SPACE to jump and activate your ability.");
   };
 
   return (
@@ -64,7 +57,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       <div className="absolute inset-0 w-full h-full">
         <CharacterModel
           character={character}
-          isGameMode={false} // Using same view as customizer
+          isGameMode={false} // Always use same view as customizer
           isRotating={!gameStarted} // Only rotate when game not started
           controls={gameStarted ? controls : undefined} // Only pass controls when game is started
           isAbilityActive={controls.isAbilityActive}
