@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { CharacterState } from '../hooks/useCharacterCustomization';
 
@@ -9,7 +9,6 @@ interface CharacterModelProps {
   isRotating?: boolean;
   controls?: any;
   isAbilityActive?: boolean;
-  allowMouseControls?: boolean;
 }
 
 const CharacterModel: React.FC<CharacterModelProps> = ({
@@ -18,7 +17,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   isRotating = true,
   controls,
   isAbilityActive = false,
-  allowMouseControls = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -28,12 +26,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const orbitControlsRef = useRef<any | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
-  
-  // Mouse controls state
-  const [isDragging, setIsDragging] = useState(false);
-  const [previousMousePosition, setPreviousMousePosition] = useState({ x: 0, y: 0 });
-  const [cameraAngle, setCameraAngle] = useState({ x: 0, y: Math.PI / 6 });
-  const [cameraDistance, setCameraDistance] = useState(7);
   
   const cleanupAnimationFrame = () => {
     if (animationFrameRef.current !== null) {
@@ -48,7 +40,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     console.log("Setting up Three.js scene, game mode:", isGameMode);
     
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // Sky blue background
+    scene.background = new THREE.Color(0x87CEEB);
     sceneRef.current = scene;
     
     const camera = new THREE.PerspectiveCamera(
@@ -58,9 +50,9 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       1000
     );
     
-    // Improved camera position for better visibility
-    camera.position.set(0, 1.5, 5); 
-    camera.lookAt(0, 0, 0);
+    // Use the same camera position for both game mode and customization
+    camera.position.set(0, 2, 7);
+    camera.lookAt(0, 1, 0);
     
     cameraRef.current = camera;
     
@@ -68,37 +60,24 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setClearColor(0x87CEEB, 1);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
-    // Improved lighting setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    directionalLight.position.set(5, 10, 5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 5, 1);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 50;
-    directionalLight.shadow.camera.left = -20;
-    directionalLight.shadow.camera.right = 20;
-    directionalLight.shadow.camera.top = 20;
-    directionalLight.shadow.camera.bottom = -20;
     scene.add(directionalLight);
-    
-    // Add a hemisphere light for more natural lighting
-    const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x3a8c3a, 0.5);
-    scene.add(hemisphereLight);
     
     const characterGroup = new THREE.Group();
     characterRef.current = characterGroup;
     scene.add(characterGroup);
     
-    // Improved ground with better visibility
-    const groundGeometry = new THREE.PlaneGeometry(100, 100, 32, 32);
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
     const groundMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x3a8c3a,
       roughness: 0.8,
@@ -111,77 +90,16 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(ground);
     groundRef.current = ground;
     
-    // Add visible platform decorations to the scene regardless of mode
+    // Add platform decorations to the scene regardless of mode
     const platformMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x8B4513,
       roughness: 0.8,
       metalness: 0.2
     });
     
-    // Modify platform positions to be more visible from camera angle
-    addPlatform(scene, -5, 0, -5, 5, 0.5, 5, platformMaterial);
-    addPlatform(scene, 5, 2, -5, 5, 0.5, 5, platformMaterial);
-    addPlatform(scene, 0, 4, -10, 5, 0.5, 5, platformMaterial);
-    
-    // Add some decorative elements to help with visual reference
-    addSphere(scene, -8, 0, -8, 1, 0xff0000);
-    addSphere(scene, 8, 0, -8, 1, 0x00ff00);
-    addSphere(scene, 0, 0, -12, 1, 0x0000ff);
-    
-    // Mouse controls event listeners
-    if (allowMouseControls && containerRef.current) {
-      const container = containerRef.current;
-      
-      const handleMouseDown = (e: MouseEvent) => {
-        setIsDragging(true);
-        setPreviousMousePosition({
-          x: e.clientX,
-          y: e.clientY
-        });
-      };
-      
-      const handleMouseMove = (e: MouseEvent) => {
-        if (isDragging) {
-          const deltaMove = {
-            x: e.clientX - previousMousePosition.x,
-            y: e.clientY - previousMousePosition.y
-          };
-          
-          // Update camera angle based on mouse movement
-          setCameraAngle(prev => ({
-            x: prev.x + deltaMove.x * 0.01,
-            y: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, prev.y + deltaMove.y * 0.01))
-          }));
-          
-          setPreviousMousePosition({
-            x: e.clientX,
-            y: e.clientY
-          });
-        }
-      };
-      
-      const handleMouseUp = () => {
-        setIsDragging(false);
-      };
-      
-      const handleWheel = (e: WheelEvent) => {
-        // Update camera distance for zoom
-        setCameraDistance(prev => Math.max(3, Math.min(15, prev + e.deltaY * 0.01)));
-        e.preventDefault();
-      };
-      
-      container.addEventListener('mousedown', handleMouseDown);
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      container.addEventListener('wheel', handleWheel, { passive: false });
-      
-      return () => {
-        container.removeEventListener('mousedown', handleMouseDown);
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-        container.removeEventListener('wheel', handleWheel);
-      };
-    }
+    addPlatform(scene, -5, 0, -10, 5, 0.5, 5, platformMaterial);
+    addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
+    addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
     
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -213,23 +131,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
           controls.position.x,
           controls.position.y + 1,
           controls.position.z
-        );
-      } else if (allowMouseControls && cameraRef.current && characterRef.current) {
-        // Update camera position based on angles for mouse controls
-        const targetPosition = controls ? 
-          new THREE.Vector3(controls.position.x, controls.position.y, controls.position.z) : 
-          new THREE.Vector3(0, 0, 0);
-        
-        // Calculate camera position based on spherical coordinates
-        const x = targetPosition.x + cameraDistance * Math.sin(cameraAngle.x) * Math.cos(cameraAngle.y);
-        const y = targetPosition.y + cameraDistance * Math.sin(cameraAngle.y) + 1.5;
-        const z = targetPosition.z + cameraDistance * Math.cos(cameraAngle.x) * Math.cos(cameraAngle.y);
-        
-        cameraRef.current.position.set(x, y, z);
-        cameraRef.current.lookAt(
-          targetPosition.x,
-          targetPosition.y + 1,
-          targetPosition.z
         );
       }
       
@@ -267,7 +168,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         rendererRef.current.dispose();
       }
     };
-  }, [isGameMode, isRotating, controls, allowMouseControls]);
+  }, [isGameMode, isRotating, controls]);
   
   function addPlatform(
     scene: THREE.Scene, 
@@ -285,23 +186,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     platform.castShadow = true;
     platform.receiveShadow = true;
     scene.add(platform);
-  }
-  
-  function addSphere(
-    scene: THREE.Scene,
-    x: number,
-    y: number,
-    z: number,
-    radius: number,
-    color: number
-  ) {
-    const geometry = new THREE.SphereGeometry(radius, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ color });
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.position.set(x, y, z);
-    sphere.castShadow = true;
-    sphere.receiveShadow = true;
-    scene.add(sphere);
   }
   
   useEffect(() => {
@@ -492,7 +376,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full ${isAbilityActive ? getAbilityClass() : ''} ${allowMouseControls ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      className={`relative w-full h-full ${isAbilityActive ? getAbilityClass() : ''}`}
       style={{ backgroundColor: '#87CEEB' }}
     />
   );
