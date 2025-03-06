@@ -1,7 +1,6 @@
-
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CharacterState } from '../hooks/useCharacterCustomization';
 
 interface CharacterModelProps {
@@ -24,7 +23,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const characterRef = useRef<THREE.Group | null>(null);
-  const orbitControlsRef = useRef<any | null>(null);
+  const orbitControlsRef = useRef<OrbitControls | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
   
@@ -79,6 +78,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     
     // Add orbit controls if not in game mode
     if (!isGameMode) {
+      // Fix: Create OrbitControls correctly with the camera and renderer's DOM element
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
@@ -407,3 +407,4 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
 };
 
 export default CharacterModel;
+
