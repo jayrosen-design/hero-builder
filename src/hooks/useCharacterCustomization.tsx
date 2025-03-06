@@ -16,6 +16,12 @@ export type CharacterState = {
   arms: string;
   legs: string;
   superAbility: SuperAbility | null;
+  colors: {
+    head: string;
+    torso: string;
+    arms: string;
+    legs: string;
+  };
 };
 
 // Options for each body part
@@ -64,6 +70,20 @@ export const superAbilityOptions = [
   },
 ];
 
+// Available colors for customization
+export const availableColors = [
+  { id: '#FF5733', name: 'Red' },
+  { id: '#3366FF', name: 'Blue' },
+  { id: '#33FF57', name: 'Green' },
+  { id: '#F3FF33', name: 'Yellow' },
+  { id: '#FF33F3', name: 'Pink' },
+  { id: '#33FFF3', name: 'Cyan' },
+  { id: '#7F33FF', name: 'Purple' },
+  { id: '#FF7F33', name: 'Orange' },
+  { id: '#444444', name: 'Gray' },
+  { id: '#FFFFFF', name: 'White' },
+];
+
 export const useCharacterCustomization = () => {
   // Initialize character with default options
   const [character, setCharacter] = useState<CharacterState>({
@@ -72,6 +92,12 @@ export const useCharacterCustomization = () => {
     arms: bodyPartOptions.arms[0].id,
     legs: bodyPartOptions.legs[0].id,
     superAbility: null,
+    colors: {
+      head: '#444444',
+      torso: '#3366FF',
+      arms: '#444444',
+      legs: '#444444',
+    }
   });
 
   // Function to update a body part
@@ -79,6 +105,17 @@ export const useCharacterCustomization = () => {
     setCharacter((prev) => ({
       ...prev,
       [part]: optionId,
+    }));
+  };
+
+  // Function to update a body part color
+  const updateBodyPartColor = (part: BodyPart, color: string) => {
+    setCharacter((prev) => ({
+      ...prev,
+      colors: {
+        ...prev.colors,
+        [part]: color,
+      }
     }));
   };
 
@@ -108,7 +145,9 @@ export const useCharacterCustomization = () => {
     character,
     bodyPartOptions,
     superAbilityOptions,
+    availableColors,
     updateBodyPart,
+    updateBodyPartColor,
     setSuperAbility,
     getSelectedOption,
     getSelectedAbility,

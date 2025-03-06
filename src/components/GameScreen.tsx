@@ -15,6 +15,12 @@ interface GameScreenProps {
     arms: string;
     legs: string;
     superAbility: SuperAbility | null;
+    colors: {
+      head: string;
+      torso: string;
+      arms: string;
+      legs: string;
+    };
   };
   onBackToCustomization: () => void;
 }
@@ -35,6 +41,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   }, [controls.isAbilityActive, character.superAbility, gameStarted]);
 
   const handleStartGame = () => {
+    console.log('Starting game');
     setGameStarted(true);
     setShowControls(false);
     resetControls();
@@ -46,7 +53,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
     <div className="w-full h-full flex flex-col">
       {/* Game world container */}
       <div className="relative flex-1 w-full overflow-hidden bg-gradient-to-b from-sky-300 to-sky-500">
-        {/* Game world - in a real implementation this would be a Three.js scene */}
+        {/* Game world - Three.js character model will be rendered here */}
         <div className="absolute inset-0">
           {/* Ground */}
           <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-emerald-600 to-emerald-500"></div>
@@ -56,13 +63,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
           <div className="absolute right-1/3 bottom-1/2 w-1/5 h-8 bg-stone-700 rounded-lg"></div>
           <div className="absolute left-1/3 bottom-2/3 w-1/4 h-8 bg-stone-700 rounded-lg"></div>
           
-          {/* Character */}
-          <div
-            className="absolute transition-all duration-75"
-            style={{
-              transform: `translate3d(${50 + controls.position.x * 100}px, ${400 - controls.position.y * 100}px, ${controls.position.z * 100}px) rotateY(${controls.rotation}rad)`,
-            }}
-          >
+          {/* Character - rendered with Three.js */}
+          <div className="absolute w-full h-full">
             <CharacterModel
               character={character}
               isGameMode={true}

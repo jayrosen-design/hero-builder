@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useCharacterCustomization } from '../hooks/useCharacterCustomization';
 import CharacterModel from '../components/CharacterModel';
@@ -17,6 +18,7 @@ const Index = () => {
     setSuperAbility,
     getSelectedOption,
     getSelectedAbility,
+    updateBodyPartColor,
   } = useCharacterCustomization();
 
   useEffect(() => {
@@ -25,14 +27,19 @@ const Index = () => {
   }, []);
 
   const handleStartGame = () => {
+    console.log("Starting game transition");
     setShowTransition(true);
-  };
-
-  const handleTransitionComplete = () => {
-    setGameMode(true);
+    
+    // Ensure we transition to game mode after animation completes
+    setTimeout(() => {
+      console.log("Transition timeout completed, setting game mode");
+      setGameMode(true);
+      setShowTransition(false);
+    }, 700);
   };
 
   const handleBackToCustomization = () => {
+    console.log("Going back to customization");
     setShowTransition(true);
     setTimeout(() => {
       setGameMode(false);
@@ -46,7 +53,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-hero-base overflow-hidden">
       <TransitionOverlay 
         isVisible={showTransition} 
-        onComplete={handleTransitionComplete} 
+        onComplete={() => console.log("Transition overlay complete callback")} 
       />
       
       {/* Header */}
@@ -79,6 +86,7 @@ const Index = () => {
                 bodyPartOptions={bodyPartOptions}
                 getSelectedOption={getSelectedOption}
                 updateBodyPart={updateBodyPart}
+                updateBodyPartColor={updateBodyPartColor}
                 selectedAbility={character.superAbility}
                 setSuperAbility={setSuperAbility}
                 onComplete={handleStartGame}
