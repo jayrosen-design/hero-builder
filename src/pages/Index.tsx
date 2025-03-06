@@ -58,8 +58,20 @@ const Index = () => {
       <header className="relative z-10 glass-panel bg-opacity-70 py-4 px-6 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-hero-dark">Hero Platformer</h1>
-          <div className="text-sm text-hero-muted">
-            {gameStarted ? 'Game Mode' : 'Customization Mode'}
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-hero-muted">
+              {gameStarted ? 'Game Mode' : 'Customization Mode'}
+            </div>
+            {gameStarted && (
+              <Button 
+                variant="outline"
+                size="sm"
+                className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
+                onClick={handleBackToCustomization}
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to Customization
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -109,17 +121,6 @@ const Index = () => {
                       </div>
                     </div>
                   )}
-                  
-                  <div className="absolute top-4 left-4 z-30">
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
-                      onClick={handleBackToCustomization}
-                    >
-                      <ArrowLeft className="w-4 h-4" /> Back to Customization
-                    </Button>
-                  </div>
                 </div>
               </div>
             )}
