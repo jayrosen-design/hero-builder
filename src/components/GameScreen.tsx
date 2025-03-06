@@ -60,13 +60,13 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col relative">
-      {/* Always render the character model container but make it fill the entire screen */}
+      {/* Character model covers the full screen regardless of game state */}
       <div className="absolute inset-0 w-full h-full">
         <CharacterModel
           character={character}
-          isGameMode={false} // Set to false to use the same view as customizer
-          isRotating={false}
-          controls={controls}
+          isGameMode={false} // Using same view as customizer
+          isRotating={!gameStarted} // Only rotate when game not started
+          controls={gameStarted ? controls : undefined} // Only pass controls when game is started
           isAbilityActive={controls.isAbilityActive}
         />
       </div>
