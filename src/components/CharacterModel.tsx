@@ -50,14 +50,14 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     );
     
     if (isGameMode) {
-      camera.position.set(0, 3, 8);
+      camera.position.set(0, 5, 10);
       camera.lookAt(0, 1, 0);
     } else {
       camera.position.set(0, 1, 5);
     }
     cameraRef.current = camera;
     
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setClearColor(0x87CEEB, 1);
     renderer.shadowMap.enabled = true;
@@ -78,20 +78,20 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     characterRef.current = characterGroup;
     scene.add(characterGroup);
     
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x3a8c3a,
+      roughness: 0.8,
+      metalness: 0.2
+    });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -1.5;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    groundRef.current = ground;
+    
     if (isGameMode) {
-      const groundGeometry = new THREE.PlaneGeometry(100, 100);
-      const groundMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x3a8c3a,
-        roughness: 0.8,
-        metalness: 0.2
-      });
-      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-      ground.rotation.x = -Math.PI / 2;
-      ground.position.y = -1.5;
-      ground.receiveShadow = true;
-      scene.add(ground);
-      groundRef.current = ground;
-      
       const platformMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x8B4513,
         roughness: 0.8,
@@ -118,7 +118,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         );
         characterRef.current.rotation.y = controls.rotation;
         
-        const cameraOffset = new THREE.Vector3(0, 3, 8);
+        const cameraOffset = new THREE.Vector3(0, 5, 10);
         const characterPosition = new THREE.Vector3(
           controls.position.x,
           controls.position.y,
@@ -376,6 +376,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     <div 
       ref={containerRef}
       className={`relative w-full h-full ${isAbilityActive ? getAbilityClass() : ''}`}
+      style={{ backgroundColor: '#87CEEB' }}
     />
   );
   
