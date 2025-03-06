@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SuperAbility } from '../hooks/useCharacterCustomization';
@@ -33,7 +32,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [gameStarted, setGameStarted] = useState(false);
   const { controls, resetControls } = useGameControls(character.superAbility);
 
-  // Show toast when ability is activated
   useEffect(() => {
     if (gameStarted && controls.isAbilityActive && character.superAbility) {
       toast.success(`${character.superAbility.charAt(0).toUpperCase() + character.superAbility.slice(1)} ability activated!`);
@@ -41,7 +39,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
   }, [controls.isAbilityActive, character.superAbility, gameStarted]);
 
   const handleStartGame = () => {
-    console.log('Starting game from GameScreen');
+    console.log('Starting game from GameScreen, received button click');
+    
     setGameStarted(true);
     setShowControls(false);
     resetControls();
@@ -51,11 +50,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Game world container */}
       <div className="relative flex-1 w-full overflow-hidden">
-        {/* Game world with Sky gradient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-sky-400 to-sky-600">
-          {/* Character - rendered with Three.js */}
           <div className="absolute w-full h-full">
             <CharacterModel
               character={character}
@@ -66,7 +62,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
             />
           </div>
           
-          {/* Debug info */}
           {gameStarted && (
             <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded">
               <div>X: {controls.position.x.toFixed(2)}</div>
@@ -80,8 +75,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
           )}
         </div>
         
-        {/* Game UI overlay */}
-        <div className="absolute bottom-4 left-4">
+        <div className="absolute bottom-4 left-4 z-10">
           <Button 
             variant="outline"
             size="sm"
@@ -92,7 +86,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
           </Button>
         </div>
         
-        <div className="absolute top-4 left-4">
+        <div className="absolute top-4 left-4 z-10">
           <Button 
             variant="outline"
             size="sm"
@@ -103,17 +97,15 @@ const GameScreen: React.FC<GameScreenProps> = ({
           </Button>
         </div>
         
-        {/* Ability indicator */}
         <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg text-sm font-medium flex items-center gap-2">
           <span>{character.superAbility ? character.superAbility.charAt(0).toUpperCase() + character.superAbility.slice(1) : 'No'} Ability</span>
           <div className={`w-3 h-3 rounded-full ${controls.isAbilityActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
         </div>
       </div>
       
-      {/* Controls overlay */}
       {showControls && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
-          <div className="glass-panel p-6 rounded-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto">
+          <div className="glass-panel p-6 rounded-xl max-w-md w-full pointer-events-auto">
             <GameControls 
               onStartGame={handleStartGame} 
               character={character}

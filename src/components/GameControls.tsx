@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { CharacterState } from '../hooks/useCharacterCustomization';
@@ -30,11 +29,14 @@ const GameControls: React.FC<GameControlsProps> = ({
     }
   };
 
-  // Handle the start game click with a safeguard against double clicks
   const handleStartClick = () => {
-    console.log('Game controls: start button clicked');
-    // Call the provided onStartGame callback
-    onStartGame();
+    console.log('Game controls: Start button clicked, forwarding to parent');
+    
+    if (typeof onStartGame === 'function') {
+      onStartGame();
+    } else {
+      console.error('onStartGame is not a function', onStartGame);
+    }
   };
 
   return (
@@ -105,8 +107,9 @@ const GameControls: React.FC<GameControlsProps> = ({
       
       <Button 
         onClick={handleStartClick}
-        className="w-full bg-hero-accent hover:bg-hero-accent/90 text-white"
-        disabled={gameStarted && false} // Prevent multiple clicks if needed
+        className="w-full bg-hero-accent hover:bg-hero-accent/90 text-white relative z-20"
+        disabled={gameStarted}
+        type="button"
       >
         {gameStarted ? 'Resume Game' : 'Start Game'}
       </Button>
