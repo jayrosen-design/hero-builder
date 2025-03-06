@@ -58,8 +58,20 @@ const Index = () => {
       <header className="relative z-10 glass-panel bg-opacity-70 py-4 px-6 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-hero-dark">Hero Platformer</h1>
-          <div className="text-sm text-hero-muted">
-            {gameStarted ? 'Game Mode' : 'Customization Mode'}
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-hero-muted">
+              {gameStarted ? 'Game Mode' : 'Customization Mode'}
+            </div>
+            {gameStarted && (
+              <Button 
+                variant="outline"
+                size="sm"
+                className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
+                onClick={handleBackToCustomization}
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to Customization
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -75,6 +87,7 @@ const Index = () => {
                 isRotating={!gameStarted}
                 controls={gameStarted ? controls : undefined}
                 isAbilityActive={gameStarted && controls.isAbilityActive}
+                allowMouseControls={true}
               />
             </div>
           </div>
@@ -97,7 +110,8 @@ const Index = () => {
                   <h2 className="text-xl font-semibold">Game Controls</h2>
                   <p className="text-sm text-hero-muted">
                     Use WASD or arrow keys to move<br />
-                    SPACE to jump and activate ability
+                    SPACE to jump and activate ability<br />
+                    Mouse to look around the scene
                   </p>
                   
                   {character.superAbility && (
@@ -109,17 +123,6 @@ const Index = () => {
                       </div>
                     </div>
                   )}
-                  
-                  <div className="absolute top-4 left-4 z-30">
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/80 backdrop-blur-sm hover:bg-white/90 flex items-center gap-2"
-                      onClick={handleBackToCustomization}
-                    >
-                      <ArrowLeft className="w-4 h-4" /> Back to Customization
-                    </Button>
-                  </div>
                 </div>
               </div>
             )}
@@ -143,7 +146,7 @@ const Index = () => {
       {/* Footer - always show */}
       <footer className="glass-panel py-3 px-6">
         <div className="container mx-auto text-center text-xs text-hero-muted">
-          <p>{gameStarted ? 'Move your hero with WASD keys!' : 'Create your custom superhero and test their abilities in the game!'}</p>
+          <p>{gameStarted ? 'Move your hero with WASD keys and use mouse to look around!' : 'Create your custom superhero and test their abilities in the game!'}</p>
         </div>
       </footer>
     </div>

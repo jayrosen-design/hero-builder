@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { CharacterState } from '../hooks/useCharacterCustomization';
 
@@ -9,6 +9,7 @@ interface CharacterModelProps {
   isRotating?: boolean;
   controls?: any;
   isAbilityActive?: boolean;
+  allowMouseControls?: boolean;
 }
 
 const CharacterModel: React.FC<CharacterModelProps> = ({
@@ -17,6 +18,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   isRotating = true,
   controls,
   isAbilityActive = false,
+  allowMouseControls = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -26,6 +28,12 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const orbitControlsRef = useRef<any | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
+  
+  // Mouse controls state
+  const [isDragging, setIsDragging] = useState(false);
+  const [previousMousePosition, setPreviousMousePosition] = useState({ x: 0, y: 0 });
+  const [cameraAngle, setCameraAngle] = useState({ x: 0, y: Math.PI / 6 });
+  const [cameraDistance, setCameraDistance] = useState(7);
   
   const cleanupAnimationFrame = () => {
     if (animationFrameRef.current !== null) {
@@ -101,6 +109,61 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
     addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
     
+    // Mouse controls event listeners
+    if (allowMouseControls && containerRef.current) {
+      const container = containerRef.current;
+      
+      const handleMouseDown = (e: MouseEvent) => {
+        setIsDragging(true);
+        setPreviousMousePosition({
+          x: e.clientX,
+          y: e.clientY
+        });
+      };
+      
+      const handleMouseMove = (e: MouseEvent) => {
+        if (isDragging) {
+          const deltaMove = {
+            x: e.clientX - previousMousePosition.x,
+            y: e.clientY - previousMousePosition.y
+          };
+          
+          // Update camera angle based on mouse movement
+          setCameraAngle(prev => ({
+            x: prev.x + deltaMove.x * 0.01,
+            y: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, prev.y + deltaMove.y * 0.01))
+          }));
+          
+          setPreviousMousePosition({
+            x: e.clientX,
+            y: e.clientY
+          });
+        }
+      };
+      
+      const handleMouseUp = () => {
+        setIsDragging(false);
+      };
+      
+      const handleWheel = (e: WheelEvent) => {
+        // Update camera distance for zoom
+        setCameraDistance(prev => Math.max(3, Math.min(15, prev + e.deltaY * 0.01)));
+        e.preventDefault();
+      };
+      
+      container.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      
+      return () => {
+        container.removeEventListener('mousedown', handleMouseDown);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+        container.removeEventListener('wheel', handleWheel);
+      };
+    }
+    
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
       
@@ -131,6 +194,23 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
           controls.position.x,
           controls.position.y + 1,
           controls.position.z
+        );
+      } else if (allowMouseControls && cameraRef.current && characterRef.current) {
+        // Update camera position based on angles for mouse controls
+        const targetPosition = controls ? 
+          new THREE.Vector3(controls.position.x, controls.position.y, controls.position.z) : 
+          new THREE.Vector3(0, 0, 0);
+        
+        // Calculate camera position based on spherical coordinates
+        const x = targetPosition.x + cameraDistance * Math.sin(cameraAngle.x) * Math.cos(cameraAngle.y);
+        const y = targetPosition.y + cameraDistance * Math.sin(cameraAngle.y) + 1.5;
+        const z = targetPosition.z + cameraDistance * Math.cos(cameraAngle.x) * Math.cos(cameraAngle.y);
+        
+        cameraRef.current.position.set(x, y, z);
+        cameraRef.current.lookAt(
+          targetPosition.x,
+          targetPosition.y + 1,
+          targetPosition.z
         );
       }
       
@@ -168,7 +248,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         rendererRef.current.dispose();
       }
     };
-  }, [isGameMode, isRotating, controls]);
+  }, [isGameMode, isRotating, controls, allowMouseControls]);
   
   function addPlatform(
     scene: THREE.Scene, 
@@ -376,7 +456,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full ${isAbilityActive ? getAbilityClass() : ''}`}
+      className={`relative w-full h-full ${isAbilityActive ? getAbilityClass() : ''} ${allowMouseControls ? 'cursor-grab active:cursor-grabbing' : ''}`}
       style={{ backgroundColor: '#87CEEB' }}
     />
   );
