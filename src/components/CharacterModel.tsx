@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from '@react-three/drei';
 import { CharacterState } from '../hooks/useCharacterCustomization';
 
 interface CharacterModelProps {
@@ -78,14 +77,12 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     
     // Add orbit controls if not in game mode
     if (!isGameMode && cameraRef.current && rendererRef.current) {
-      // When using drei's OrbitControls, we need to create it a bit differently
-      // Instead of using new, we'll create it as an object with the right properties
+      // Instead of using the drei OrbitControls, just create a simple object to track rotation
       const controls = {
         enableDamping: true,
         dampingFactor: 0.05,
-        // Attach to camera (this mimics what OrbitControls does internally)
         target: new THREE.Vector3(0, 0, 0),
-        update: () => {} // Will be replaced by drei's actual implementation
+        update: () => {} // Dummy function that will be used in animation loop
       };
       orbitControlsRef.current = controls;
     }
@@ -137,7 +134,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         characterRef.current.rotation.y = controls.rotation;
       }
       
-      // Update orbit controls - simplified since we're using drei
+      // We don't need orbital controls for the simple rotation in customization mode
+      // but we'll keep this as a placeholder for future enhancements
       if (orbitControlsRef.current && typeof orbitControlsRef.current.update === 'function') {
         orbitControlsRef.current.update();
       }
@@ -386,7 +384,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     } else {
       characterRef.current.position.set(0, 0, 0);
     }
-    
   }, [character, isGameMode, controls, isAbilityActive]);
   
   // Update character position in game mode

@@ -30,6 +30,13 @@ const GameControls: React.FC<GameControlsProps> = ({
     }
   };
 
+  // Handle the start game click with a safeguard against double clicks
+  const handleStartClick = () => {
+    console.log('Game controls: start button clicked');
+    // Call the provided onStartGame callback
+    onStartGame();
+  };
+
   return (
     <div className="text-center">
       <h2 className="text-xl font-semibold mb-2">Game Controls</h2>
@@ -97,8 +104,9 @@ const GameControls: React.FC<GameControlsProps> = ({
       )}
       
       <Button 
-        onClick={onStartGame}
+        onClick={handleStartClick}
         className="w-full bg-hero-accent hover:bg-hero-accent/90 text-white"
+        disabled={gameStarted && false} // Prevent multiple clicks if needed
       >
         {gameStarted ? 'Resume Game' : 'Start Game'}
       </Button>

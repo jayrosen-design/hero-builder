@@ -41,7 +41,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   }, [controls.isAbilityActive, character.superAbility, gameStarted]);
 
   const handleStartGame = () => {
-    console.log('Starting game');
+    console.log('Starting game from GameScreen');
     setGameStarted(true);
     setShowControls(false);
     resetControls();
