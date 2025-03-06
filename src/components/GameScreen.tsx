@@ -52,17 +52,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
   return (
     <div className="w-full h-full flex flex-col">
       {/* Game world container */}
-      <div className="relative flex-1 w-full overflow-hidden bg-gradient-to-b from-sky-300 to-sky-500">
-        {/* Game world - Three.js character model will be rendered here */}
-        <div className="absolute inset-0">
-          {/* Ground */}
-          <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-emerald-600 to-emerald-500"></div>
-          
-          {/* Platforms */}
-          <div className="absolute left-1/4 bottom-1/3 w-1/6 h-8 bg-stone-700 rounded-lg"></div>
-          <div className="absolute right-1/3 bottom-1/2 w-1/5 h-8 bg-stone-700 rounded-lg"></div>
-          <div className="absolute left-1/3 bottom-2/3 w-1/4 h-8 bg-stone-700 rounded-lg"></div>
-          
+      <div className="relative flex-1 w-full overflow-hidden">
+        {/* Game world with Sky gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-400 to-sky-600">
           {/* Character - rendered with Three.js */}
           <div className="absolute w-full h-full">
             <CharacterModel
@@ -73,6 +65,19 @@ const GameScreen: React.FC<GameScreenProps> = ({
               isAbilityActive={controls.isAbilityActive}
             />
           </div>
+          
+          {/* Debug info */}
+          {gameStarted && (
+            <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded">
+              <div>X: {controls.position.x.toFixed(2)}</div>
+              <div>Y: {controls.position.y.toFixed(2)}</div>
+              <div>Z: {controls.position.z.toFixed(2)}</div>
+              <div>Rotation: {(controls.rotation * 180 / Math.PI).toFixed(0)}°</div>
+              <div>
+                {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Game UI overlay */}

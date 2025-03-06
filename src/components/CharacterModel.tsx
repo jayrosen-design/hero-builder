@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from '@react-three/drei';
 import { CharacterState } from '../hooks/useCharacterCustomization';
 
 interface CharacterModelProps {
@@ -24,8 +24,9 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const characterRef = useRef<THREE.Group | null>(null);
-  const orbitControlsRef = useRef<OrbitControls | null>(null);
+  const orbitControlsRef = useRef<any | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const groundRef = useRef<THREE.Mesh | null>(null);
   
   // Clean up function for the animation frame
   const cleanupAnimationFrame = () => {
@@ -39,6 +40,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     
+    console.log("Setting up Three.js scene, game mode:", isGameMode);
+    
     // Initialize scene, camera, and renderer
     const scene = new THREE.Scene();
     sceneRef.current = scene;
@@ -49,12 +52,19 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       0.1, 
       1000
     );
-    camera.position.z = 5;
+    
+    // Set different camera positions based on mode
+    if (isGameMode) {
+      camera.position.set(0, 3, 8); // Position behind character for game view
+    } else {
+      camera.position.set(0, 1, 5); // For customization view
+    }
     cameraRef.current = camera;
     
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.enabled = true;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
@@ -63,7 +73,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(ambientLight);
     
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(1, 1, 1);
+    directionalLight.position.set(1, 5, 1);
+    directionalLight.castShadow = true;
     scene.add(directionalLight);
     
     // Add orbit controls if not in game mode
@@ -79,6 +90,28 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     characterRef.current = characterGroup;
     scene.add(characterGroup);
     
+    // Add ground plane for game mode
+    if (isGameMode) {
+      // Create a ground plane
+      const groundGeometry = new THREE.PlaneGeometry(50, 50);
+      const groundMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x3a8c3a,
+        roughness: 0.8,
+        metalness: 0.2
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+      ground.position.y = -1.5; // Position below character
+      ground.receiveShadow = true;
+      scene.add(ground);
+      groundRef.current = ground;
+      
+      // Add some platforms
+      addPlatform(scene, -5, 0, -10, 5, 0.5, 5);
+      addPlatform(scene, 8, 2, -8, 5, 0.5, 5);
+      addPlatform(scene, 0, 4, -15, 5, 0.5, 5);
+    }
+    
     // Set up animation loop
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -86,6 +119,17 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       // Rotate character if enabled
       if (isRotating && !isGameMode && characterRef.current) {
         characterRef.current.rotation.y += 0.01;
+      }
+      
+      // Update character position in game mode
+      if (isGameMode && controls && characterRef.current) {
+        // Update character position based on controls
+        characterRef.current.position.set(
+          controls.position.x,
+          controls.position.y, 
+          controls.position.z
+        );
+        characterRef.current.rotation.y = controls.rotation;
       }
       
       // Update orbit controls
@@ -114,6 +158,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     
     // Cleanup
     return () => {
+      console.log("Cleaning up Three.js scene");
       cleanupAnimationFrame();
       
       if (rendererRef.current && containerRef.current) {
@@ -129,9 +174,25 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     };
   }, [isGameMode, isRotating]);
   
+  // Helper function to add platforms
+  function addPlatform(scene: THREE.Scene, x: number, y: number, z: number, width: number, height: number, depth: number) {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const material = new THREE.MeshStandardMaterial({ 
+      color: 0x8B4513, // Brown color for platforms
+      roughness: 0.8
+    });
+    const platform = new THREE.Mesh(geometry, material);
+    platform.position.set(x, y, z);
+    platform.castShadow = true;
+    platform.receiveShadow = true;
+    scene.add(platform);
+  }
+  
   // Update character model when character state changes
   useEffect(() => {
     if (!characterRef.current || !sceneRef.current) return;
+    
+    console.log("Updating character model with:", character);
     
     // Clear existing character model
     while (characterRef.current.children.length > 0) {
@@ -165,6 +226,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     
     const head = new THREE.Mesh(headGeometry, headMaterial);
     head.position.y = 1.5;
+    head.castShadow = true;
     characterRef.current.add(head);
     
     // Torso
@@ -191,6 +253,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     
     const torso = new THREE.Mesh(torsoGeometry, torsoMaterial);
     torso.position.y = 0.4;
+    torso.castShadow = true;
     characterRef.current.add(torso);
     
     // Arms
@@ -223,6 +286,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     leftArm.position.set(-0.7, 0.4, 0);
     leftArm.scale.set(armScale, armScale, armScale);
     leftArm.rotation.z = Math.PI / 12;
+    leftArm.castShadow = true;
     characterRef.current.add(leftArm);
     
     // Right arm
@@ -230,6 +294,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     rightArm.position.set(0.7, 0.4, 0);
     rightArm.scale.set(armScale, armScale, armScale);
     rightArm.rotation.z = -Math.PI / 12;
+    rightArm.castShadow = true;
     characterRef.current.add(rightArm);
     
     // Legs
@@ -257,11 +322,13 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     // Left leg
     const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
     leftLeg.position.set(-0.3, -0.6, 0);
+    leftLeg.castShadow = true;
     characterRef.current.add(leftLeg);
     
     // Right leg
     const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
     rightLeg.position.set(0.3, -0.6, 0);
+    rightLeg.castShadow = true;
     characterRef.current.add(rightLeg);
     
     // Add special ability effects

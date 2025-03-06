@@ -47,7 +47,7 @@ const Index = () => {
     }, 700);
   };
 
-  console.log("Index rendering with gameMode:", gameMode, "showTransition:", showTransition);
+  console.log("Index rendering with gameMode:", gameMode, "showTransition:", showTransition, "character:", character);
   
   return (
     <div className="min-h-screen flex flex-col bg-hero-base overflow-hidden">
