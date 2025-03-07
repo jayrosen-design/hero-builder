@@ -55,22 +55,63 @@ export const playFlyingSound = () => {
   });
 };
 
-// Variable to track footstep sound timing
+// Variables to track footstep sound state
+let footstepSoundInstance: HTMLAudioElement | null = null;
+let isFootstepSoundPlaying = false;
 let lastFootstepTime = 0;
 const FOOTSTEP_INTERVAL = 350; // Milliseconds between footstep sounds
 
 /**
- * Play the footstep sound effect with rate limiting
+ * Start playing the footstep sound in a continuous loop
  */
-export const playFootstepSound = () => {
+export const startFootstepSound = () => {
   const now = Date.now();
-  // Only play footstep sound if enough time has passed since the last one
-  if (now - lastFootstepTime > FOOTSTEP_INTERVAL) {
-    const sound = footstepSound.cloneNode() as HTMLAudioElement;
-    sound.volume = 0.2; // Set to 20% volume (footsteps should be subtle)
-    sound.play().catch(err => {
-      console.error("Error playing footstep sound:", err);
-    });
-    lastFootstepTime = now;
+  
+  // If sound is already playing or not enough time has passed, do nothing
+  if (isFootstepSoundPlaying || now - lastFootstepTime < FOOTSTEP_INTERVAL) {
+    return;
+  }
+  
+  // Create a new footstep sound instance
+  footstepSoundInstance = footstepSound.cloneNode() as HTMLAudioElement;
+  footstepSoundInstance.volume = 0.2; // Set to 20% volume (footsteps should be subtle)
+  
+  // Set up loop when sound ends
+  footstepSoundInstance.onended = () => {
+    if (isFootstepSoundPlaying) {
+      lastFootstepTime = Date.now();
+      
+      // Only start a new sound if we're still supposed to be playing
+      if (isFootstepSoundPlaying && footstepSoundInstance) {
+        const newSound = footstepSound.cloneNode() as HTMLAudioElement;
+        newSound.volume = 0.2;
+        newSound.onended = footstepSoundInstance.onended;
+        footstepSoundInstance = newSound;
+        footstepSoundInstance.play().catch(err => {
+          console.error("Error playing footstep sound:", err);
+        });
+      }
+    }
+  };
+  
+  // Start playing
+  isFootstepSoundPlaying = true;
+  lastFootstepTime = now;
+  footstepSoundInstance.play().catch(err => {
+    console.error("Error playing footstep sound:", err);
+    isFootstepSoundPlaying = false;
+  });
+};
+
+/**
+ * Stop the footstep sound loop
+ */
+export const stopFootstepSound = () => {
+  isFootstepSoundPlaying = false;
+  
+  if (footstepSoundInstance) {
+    footstepSoundInstance.onended = null;
+    footstepSoundInstance.pause();
+    footstepSoundInstance = null;
   }
 };

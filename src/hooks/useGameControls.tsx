@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
-import { playCoinSound, playJumpSound, playFlyingSound, playFootstepSound } from '../utils/soundEffects';
+import { 
+  playCoinSound, 
+  playJumpSound, 
+  playFlyingSound, 
+  startFootstepSound, 
+  stopFootstepSound 
+} from '../utils/soundEffects';
 
 type Position = {
   x: number;
@@ -429,13 +435,17 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           }
         }
         
-        // Play footstep sound when moving on the ground (not jumping, not flying)
+        // Manage footstep sounds based on movement state
         const isGrounded = prev.position.y <= 0.1 || isOnPlatform(prev.position, prev.platforms) !== null;
         const isMovingHorizontally = (forward || backward || left || right);
+        const isFlying = prev.isAbilityActive && superAbility === 'flying';
         
-        if (isGrounded && isMovingHorizontally && !prev.isJumping && !prev.isFalling 
-            && (!prev.isAbilityActive || superAbility !== 'flying')) {
-          playFootstepSound();
+        // Start footstep sound when moving on ground
+        if (isGrounded && isMovingHorizontally && !prev.isJumping && !prev.isFalling && !isFlying) {
+          startFootstepSound();
+        } else {
+          // Stop the sound when not meeting any of the conditions
+          stopFootstepSound();
         }
         
         // Console log movement for debugging
@@ -453,7 +463,11 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       });
     }, 16); // ~60fps update rate
     
-    return () => clearInterval(moveInterval);
+    return () => {
+      clearInterval(moveInterval);
+      // Always stop footstep sound when unmounting
+      stopFootstepSound();
+    };
   }, [superAbility, checkCoinCollection, isOnPlatform]);
 
   // Reset game controls
