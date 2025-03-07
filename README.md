@@ -1,69 +1,52 @@
-# Welcome to your Lovable project
+# Hero Builder - 3D Superhero Platformer Game
 
-## Project info
+Hero Builder is a 3D superhero platformer game that lets you design your own hero and take on dynamic challenges in a vibrant 3D world. Customize your character’s appearance, select a unique super ability, and explore an environment filled with collectible coins, interactive platforms, and obstacles that react to your powers.
 
-**URL**: https://lovable.dev/projects/9ef9cd73-226e-4a5f-b2bb-395471c3741c
+## Features
 
-## How can I edit this code?
+- **Character Customization:**
+  - Modify your hero’s head, torso, arms, and legs with various styles and colors.
+  - Choose one of three super abilities:
+    - **Flying:** Activates a cape and allows you to fly upward with Q and descend with E.
+    - **Strength:** Enlarges your hero’s arms and lets you break platforms to clear paths.
+    - **Magic:** Causes your hands to glow, attracting nearby coins for easier collection.
 
-There are several ways of editing your application.
+- **3D Gameplay Environment:**
+  - Navigate through a world of floating platforms at varying heights.
+  - Collect coins scattered across the level.
+  - Use interactive elements—platforms that break when you use the Strength ability—to discover new routes.
 
-**Use Lovable**
+- **Intuitive Controls:**
+  - **Movement:** WASD or Arrow Keys.
+  - **Jump:** Space Bar.
+  - **Activate/Deactivate Ability:** Q.
+  - **Fly Down (Flying ability only):** E.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9ef9cd73-226e-4a5f-b2bb-395471c3741c) and start prompting.
+- **Debug Panel:**
+  - A built-in panel displays position coordinates, rotation, and movement state to help you fine-tune your gameplay experience.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Screenshots
 
-**Use your preferred IDE**
+### Customization Screen & Debug Panel
+![Customization Screen](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_01_28.png)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Debug Information
+![Debug Panel](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_01_56.png)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 3D Gameplay Environment
+![Gameplay Environment](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_03_00.png)
 
-Follow these steps:
+### Enhanced Visuals During Play
+![Enhanced Visuals](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_03_38.png)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Active Ability Visuals
+![Active Ability](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_03_57.png)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Flying Ability Demonstration
+![Flying Ability](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_05_03.png)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Strength Abilitydestorys the platforms
+![Strength Ability](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_05_27.png)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/9ef9cd73-226e-4a5f-b2bb-395471c3741c) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Magic Ability attracts coins
+![Super Ability Effects](https://github.com/jayrosen-design/hero-builder/blob/main/screenshots/screencapture-hero-builder-lovable-app-2025-03-07-14_06_09.png)
