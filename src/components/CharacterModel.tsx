@@ -386,7 +386,9 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
             opacity: 0.9,
           });
           const cape = new THREE.Mesh(capeGeometry, capeMaterial);
-          cape.position.set(0, 0.4, -0.4);
+          // Changed position to be behind the character by making z positive
+          cape.position.set(0, 0.4, 0.4); 
+          // Adjust rotation to flow naturally from the back
           cape.rotation.x = Math.PI / 10;
           characterRef.current.add(cape);
           break;
