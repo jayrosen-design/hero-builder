@@ -348,7 +348,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
   // Movement system
   useEffect(() => {
     const moveSpeed = 0.1;
-    const flySpeed = 0.15; // A bit faster for vertical flying movement
+    const flySpeed = 0.15;
     
     const moveInterval = setInterval(() => {
       setControls((prev) => {
@@ -364,8 +364,9 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           console.log("Coin collected! New count:", prev.coins + 1);
         }
         
-        // If not moving and not collecting coins, just return the previous state with updated coins
-        if (!forward && !backward && !left && !right && !up && !down && !prev.isAbilityActive) {
+        // If not moving and not collecting coins, stop footstep sound and return previous state
+        if (!forward && !backward && !left && !right && !up && !down) {
+          stopFootstepSound();
           if (newCoinCollected) {
             return {
               ...prev,
@@ -440,11 +441,9 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         const isMovingHorizontally = (forward || backward || left || right);
         const isFlying = prev.isAbilityActive && superAbility === 'flying';
         
-        // Start footstep sound when moving on ground
         if (isGrounded && isMovingHorizontally && !prev.isJumping && !prev.isFalling && !isFlying) {
           startFootstepSound();
         } else {
-          // Stop the sound when not meeting any of the conditions
           stopFootstepSound();
         }
         
@@ -461,11 +460,10 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           coins: newCoinCollected ? prev.coins + 1 : prev.coins
         };
       });
-    }, 16); // ~60fps update rate
+    }, 16);
     
     return () => {
       clearInterval(moveInterval);
-      // Always stop footstep sound when unmounting
       stopFootstepSound();
     };
   }, [superAbility, checkCoinCollection, isOnPlatform]);
