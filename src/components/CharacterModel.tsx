@@ -26,6 +26,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const orbitControlsRef = useRef<any | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
+  const coinsRef = useRef<THREE.Object3D[]>([]);
   
   const cleanupAnimationFrame = () => {
     if (animationFrameRef.current !== null) {
@@ -101,6 +102,11 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
     addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
     
+    // Add coins to the scene if controls exist
+    if (controls && controls.coinObjects) {
+      addCoins(scene, controls.coinObjects);
+    }
+    
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
       
@@ -117,6 +123,11 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         );
         characterRef.current.rotation.y = controls.rotation;
         
+        // Update coin visibility based on collection status
+        if (controls.coinObjects) {
+          updateCoins(controls.coinObjects);
+        }
+        
         // Follow the character with camera
         const cameraOffset = new THREE.Vector3(0, 2, 5); // Camera follows character from behind
         const characterPosition = new THREE.Vector3(
@@ -132,6 +143,17 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
           controls.position.y + 1,
           controls.position.z
         );
+      }
+      
+      // Animate coins to rotate and float
+      if (coinsRef.current.length > 0) {
+        coinsRef.current.forEach((coin, index) => {
+          if (coin.visible) {
+            coin.rotation.y += 0.02;
+            // Add subtle floating animation
+            coin.position.y += Math.sin(Date.now() * 0.002 + index) * 0.001;
+          }
+        });
       }
       
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -186,6 +208,41 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     platform.castShadow = true;
     platform.receiveShadow = true;
     scene.add(platform);
+  }
+  
+  function addCoins(scene: THREE.Scene, coinObjects: any[]) {
+    // Clear previous coins
+    coinsRef.current = [];
+    
+    // Create a coin geometry and material to reuse
+    const coinGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.05, 16);
+    const coinMaterial = new THREE.MeshStandardMaterial({
+      color: 0xFFD700,
+      metalness: 1,
+      roughness: 0.3,
+      emissive: 0xFFD700,
+      emissiveIntensity: 0.2
+    });
+    
+    coinObjects.forEach((coinData, index) => {
+      const coin = new THREE.Mesh(coinGeometry, coinMaterial);
+      coin.rotation.x = Math.PI / 2; // Make coin face up
+      coin.position.set(coinData.x, coinData.y, coinData.z);
+      coin.castShadow = true;
+      coin.visible = !coinData.collected;
+      coin.userData = { id: coinData.id };
+      scene.add(coin);
+      coinsRef.current.push(coin);
+    });
+  }
+  
+  function updateCoins(coinObjects: any[]) {
+    coinObjects.forEach(coinData => {
+      const coin = coinsRef.current.find(c => c.userData.id === coinData.id);
+      if (coin) {
+        coin.visible = !coinData.collected;
+      }
+    });
   }
   
   useEffect(() => {

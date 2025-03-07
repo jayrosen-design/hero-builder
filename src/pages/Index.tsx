@@ -6,7 +6,8 @@ import CustomizationControls from '../components/CustomizationControls';
 import { useGameControls } from '../hooks/useGameControls';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Coins } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   console.log("Index component rendering");
@@ -128,23 +129,34 @@ const Index = () => {
         </div>
       </main>
       
-      {/* Debug info panel when in game mode */}
+      {/* Game UI overlays */}
       {gameStarted && (
-        <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded z-30">
-          <div>X: {controls.position.x.toFixed(2)}</div>
-          <div>Y: {controls.position.y.toFixed(2)}</div>
-          <div>Z: {controls.position.z.toFixed(2)}</div>
-          <div>Rotation: {(controls.rotation * 180 / Math.PI).toFixed(0)}°</div>
-          <div>
-            {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
+        <>
+          {/* Debug info panel when in game mode */}
+          <div className="absolute top-20 left-4 text-xs text-white bg-black/30 p-2 rounded z-30">
+            <div>X: {controls.position.x.toFixed(2)}</div>
+            <div>Y: {controls.position.y.toFixed(2)}</div>
+            <div>Z: {controls.position.z.toFixed(2)}</div>
+            <div>Rotation: {(controls.rotation * 180 / Math.PI).toFixed(0)}°</div>
+            <div>
+              {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
+            </div>
           </div>
-        </div>
+          
+          {/* Coin Counter */}
+          <div className="absolute top-20 right-4 z-30">
+            <Badge variant="default" className="flex items-center gap-2 px-3 py-2 text-base font-bold bg-amber-500 text-amber-950">
+              <Coins className="w-5 h-5" /> 
+              <span>× {controls.coins}</span>
+            </Badge>
+          </div>
+        </>
       )}
       
       {/* Footer - always show */}
       <footer className="glass-panel py-3 px-6">
         <div className="container mx-auto text-center text-xs text-hero-muted">
-          <p>{gameStarted ? 'Move your hero with WASD keys!' : 'Create your custom superhero and test their abilities in the game!'}</p>
+          <p>{gameStarted ? 'Move your hero with WASD keys! Collect coins around the world!' : 'Create your custom superhero and test their abilities in the game!'}</p>
         </div>
       </footer>
     </div>

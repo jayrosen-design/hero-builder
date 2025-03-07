@@ -8,12 +8,32 @@ type Position = {
   z: number;
 };
 
+type Platform = {
+  x: number;
+  y: number;
+  z: number;
+  width: number;
+  height: number;
+  depth: number;
+};
+
+type Coin = {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  collected: boolean;
+};
+
 type GameControls = {
   position: Position;
   rotation: number;
   isJumping: boolean;
   isFalling: boolean;
   isAbilityActive: boolean;
+  coins: number;
+  platforms: Platform[];
+  coinObjects: Coin[];
   movement: {
     forward: boolean;
     backward: boolean;
@@ -21,6 +41,28 @@ type GameControls = {
     right: boolean;
   };
 };
+
+// Define platforms in the game world
+const gamePlatforms: Platform[] = [
+  // Ground platform (large flat surface)
+  { x: 0, y: -1.5, z: 0, width: 100, height: 0.5, depth: 100 },
+  // Elevated platforms
+  { x: -5, y: 0, z: -10, width: 5, height: 0.5, depth: 5 },
+  { x: 8, y: 2, z: -8, width: 5, height: 0.5, depth: 5 },
+  { x: 0, y: 4, z: -15, width: 5, height: 0.5, depth: 5 },
+];
+
+// Define coins in the game world
+const initialCoins: Coin[] = [
+  // Ground level coins
+  { id: 'coin1', x: 2, y: -1, z: 2, collected: false },
+  { id: 'coin2', x: -2, y: -1, z: -2, collected: false },
+  { id: 'coin3', x: 4, y: -1, z: -3, collected: false },
+  // Platform coins
+  { id: 'coin4', x: -5, y: 0.5, z: -10, collected: false },
+  { id: 'coin5', x: 8, y: 2.5, z: -8, collected: false },
+  { id: 'coin6', x: 0, y: 4.5, z: -15, collected: false },
+];
 
 export const useGameControls = (superAbility: SuperAbility | null) => {
   // Initialize with default values
@@ -30,6 +72,9 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     isJumping: false,
     isFalling: false,
     isAbilityActive: false,
+    coins: 0,
+    platforms: gamePlatforms,
+    coinObjects: initialCoins,
     movement: {
       forward: false,
       backward: false,
@@ -128,6 +173,52 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     }
   }, []);
 
+  // Check if character is on a platform
+  const isOnPlatform = useCallback((position: Position, platforms: Platform[]) => {
+    const characterRadius = 0.5; // approximate character width/2
+    
+    for (const platform of platforms) {
+      // Check if character is within the x-z bounds of the platform
+      const withinX = position.x >= platform.x - platform.width/2 - characterRadius && 
+                      position.x <= platform.x + platform.width/2 + characterRadius;
+      const withinZ = position.z >= platform.z - platform.depth/2 - characterRadius && 
+                      position.z <= platform.z + platform.depth/2 + characterRadius;
+      
+      // Check if character is at the right height (slightly above platform)
+      const atRightHeight = Math.abs(position.y - (platform.y + platform.height/2 + 0.1)) < 0.2;
+      
+      if (withinX && withinZ && atRightHeight) {
+        return platform.y + platform.height/2 + 0.1; // Return the platform's top y-position
+      }
+    }
+    return null; // Not on any platform
+  }, []);
+
+  // Check coin collection
+  const checkCoinCollection = useCallback((position: Position, coinObjects: Coin[]) => {
+    const collectionRadius = 1; // Distance at which coins can be collected
+    let collected = false;
+    
+    const updatedCoins = coinObjects.map(coin => {
+      if (coin.collected) return coin;
+      
+      const distance = Math.sqrt(
+        Math.pow(position.x - coin.x, 2) + 
+        Math.pow(position.y - coin.y, 2) + 
+        Math.pow(position.z - coin.z, 2)
+      );
+      
+      if (distance < collectionRadius) {
+        collected = true;
+        return { ...coin, collected: true };
+      }
+      
+      return coin;
+    });
+    
+    return { updatedCoins, newCoinCollected: collected };
+  }, []);
+
   // Handle jumping physics
   useEffect(() => {
     if (controls.isJumping) {
@@ -169,13 +260,17 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         setControls((prev) => {
           const fallProgress = (Date.now() - startTime) / fallDuration;
           
-          if (fallProgress >= 1 || prev.position.y <= 0) {
+          // Check if character is on a platform
+          const platformY = isOnPlatform(prev.position, prev.platforms);
+          
+          if (fallProgress >= 1 || prev.position.y <= 0 || platformY !== null) {
             clearInterval(fallInterval);
-            console.log("Landing at y:", Math.max(0, prev.position.y));
+            const landingY = platformY !== null ? platformY : 0;
+            console.log("Landing at y:", landingY);
             return {
               ...prev,
               isFalling: false,
-              position: { ...prev.position, y: 0 },
+              position: { ...prev.position, y: landingY },
             };
           }
           
@@ -189,7 +284,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       
       return () => clearInterval(fallInterval);
     }
-  }, [controls.isJumping, controls.isFalling]);
+  }, [controls.isJumping, controls.isFalling, isOnPlatform]);
 
   // Set up event listeners
   useEffect(() => {
@@ -211,7 +306,23 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       setControls((prev) => {
         const { forward, backward, left, right } = prev.movement;
         
-        if (!forward && !backward && !left && !right) return prev;
+        if (!forward && !backward && !left && !right) {
+          // Check for coin collection even when not moving
+          const { updatedCoins, newCoinCollected } = checkCoinCollection(
+            prev.position, 
+            prev.coinObjects
+          );
+          
+          if (newCoinCollected) {
+            return {
+              ...prev,
+              coinObjects: updatedCoins,
+              coins: prev.coins + 1
+            };
+          }
+          
+          return prev;
+        }
         
         let newRotation = prev.rotation;
         let xDelta = 0;
@@ -241,12 +352,26 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         if (backward && left) newRotation = Math.PI * 0.75;
         if (backward && right) newRotation = -Math.PI * 0.75;
         
+        // Calculate new position
+        const newPosition = {
+          x: prev.position.x + xDelta,
+          y: prev.position.y,
+          z: prev.position.z + zDelta,
+        };
+        
         // Apply character's ability effects to movement
         let yDelta = 0;
         if (prev.isAbilityActive && superAbility === 'flying' && !prev.isJumping && !prev.isFalling) {
           yDelta = 0.05; // Gradually lift the character when flying
           if (prev.position.y > 3) yDelta = 0; // Max height
+          newPosition.y += yDelta;
         }
+        
+        // Check for coin collection
+        const { updatedCoins, newCoinCollected } = checkCoinCollection(
+          newPosition, 
+          prev.coinObjects
+        );
         
         // Console log movement for debugging
         if (forward || backward || left || right) {
@@ -255,18 +380,16 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         
         return {
           ...prev,
-          position: {
-            x: prev.position.x + xDelta,
-            y: Math.max(0, prev.position.y + yDelta), // Don't go below ground
-            z: prev.position.z + zDelta,
-          },
+          position: newPosition,
           rotation: newRotation,
+          coinObjects: updatedCoins,
+          coins: newCoinCollected ? prev.coins + 1 : prev.coins
         };
       });
     }, 16); // ~60fps update rate
     
     return () => clearInterval(moveInterval);
-  }, [superAbility]);
+  }, [superAbility, checkCoinCollection]);
 
   // Reset game controls
   const resetControls = () => {
@@ -277,6 +400,9 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       isJumping: false,
       isFalling: false,
       isAbilityActive: false,
+      coins: 0,
+      platforms: gamePlatforms,
+      coinObjects: initialCoins,
       movement: {
         forward: false,
         backward: false,
