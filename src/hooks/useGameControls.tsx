@@ -196,7 +196,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
 
   // Check coin collection
   const checkCoinCollection = useCallback((position: Position, coinObjects: Coin[]) => {
-    const collectionRadius = 1; // Distance at which coins can be collected
+    const collectionRadius = 1.5; // Increased radius to make collection easier
     let collected = false;
     
     const updatedCoins = coinObjects.map(coin => {
@@ -210,6 +210,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       
       if (distance < collectionRadius) {
         collected = true;
+        console.log(`Collected coin at (${coin.x}, ${coin.y}, ${coin.z}) with distance ${distance}`);
         return { ...coin, collected: true };
       }
       
@@ -306,13 +307,18 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       setControls((prev) => {
         const { forward, backward, left, right } = prev.movement;
         
-        if (!forward && !backward && !left && !right) {
-          // Check for coin collection even when not moving
-          const { updatedCoins, newCoinCollected } = checkCoinCollection(
-            prev.position, 
-            prev.coinObjects
-          );
-          
+        // Check for coin collection even when not moving
+        const { updatedCoins, newCoinCollected } = checkCoinCollection(
+          prev.position, 
+          prev.coinObjects
+        );
+        
+        if (newCoinCollected) {
+          console.log("Coin collected! New count:", prev.coins + 1);
+        }
+        
+        // If not moving and not collecting coins, just return the previous state with updated coins
+        if (!forward && !backward && !left && !right && !prev.isAbilityActive) {
           if (newCoinCollected) {
             return {
               ...prev,
@@ -320,18 +326,22 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
               coins: prev.coins + 1
             };
           }
-          
           return prev;
         }
         
         let newRotation = prev.rotation;
         let xDelta = 0;
         let zDelta = 0;
+        let yDelta = 0;
         
         // Adjust movement direction based on key presses
         if (forward) {
           zDelta -= moveSpeed;
           newRotation = 0;
+          // When flying and moving forward, also move up
+          if (prev.isAbilityActive && superAbility === 'flying') {
+            yDelta += 0.05; // Ascend when flying forward
+          }
         }
         if (backward) {
           zDelta += moveSpeed;
@@ -355,23 +365,22 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         // Calculate new position
         const newPosition = {
           x: prev.position.x + xDelta,
-          y: prev.position.y,
+          y: prev.position.y + yDelta,
           z: prev.position.z + zDelta,
         };
         
         // Apply character's ability effects to movement
-        let yDelta = 0;
         if (prev.isAbilityActive && superAbility === 'flying' && !prev.isJumping && !prev.isFalling) {
-          yDelta = 0.05; // Gradually lift the character when flying
-          if (prev.position.y > 3) yDelta = 0; // Max height
-          newPosition.y += yDelta;
+          // When flying and not moving forward, hover in place
+          if (!forward) {
+            newPosition.y = Math.max(newPosition.y, 0.5); // Maintain minimum hover height
+          }
+          
+          // Max height limit for flying
+          if (newPosition.y > 5) {
+            newPosition.y = 5;
+          }
         }
-        
-        // Check for coin collection
-        const { updatedCoins, newCoinCollected } = checkCoinCollection(
-          newPosition, 
-          prev.coinObjects
-        );
         
         // Console log movement for debugging
         if (forward || backward || left || right) {
