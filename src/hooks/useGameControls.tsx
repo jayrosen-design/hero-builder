@@ -1,6 +1,6 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
+import { playCoinSound } from '../utils/soundEffects';
 
 type Position = {
   x: number;
@@ -239,6 +239,8 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       if (distance < collectionRadius) {
         collected = true;
         console.log(`Collected coin at (${coin.x}, ${coin.y}, ${coin.z}) with distance ${distance}`);
+        // Play the coin collection sound
+        playCoinSound();
         return { ...coin, collected: true };
       }
       
