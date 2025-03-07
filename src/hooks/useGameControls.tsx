@@ -173,7 +173,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     }
   }, []);
 
-  // Check if character is on a platform
+  // Improved platform collision detection
   const isOnPlatform = useCallback((position: Position, platforms: Platform[]) => {
     const characterRadius = 0.5; // approximate character width/2
     
@@ -184,24 +184,28 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       const withinZ = position.z >= platform.z - platform.depth/2 - characterRadius && 
                       position.z <= platform.z + platform.depth/2 + characterRadius;
       
-      // Check if character is at the right height (slightly above platform)
-      const atRightHeight = Math.abs(position.y - (platform.y + platform.height/2 + 0.1)) < 0.2;
+      // Check if character is at the right height (slightly above or on platform)
+      // This checks if the character is falling onto the platform from above
+      const fallingOntoPlat = position.y >= platform.y && 
+                            position.y <= platform.y + platform.height + 0.2;
       
-      if (withinX && withinZ && atRightHeight) {
-        return platform.y + platform.height/2 + 0.1; // Return the platform's top y-position
+      if (withinX && withinZ && fallingOntoPlat) {
+        console.log("Landing on platform at y:", platform.y + platform.height);
+        return platform.y + platform.height; // Return the platform's top y-position
       }
     }
     return null; // Not on any platform
   }, []);
 
-  // Check coin collection
+  // Improved coin collection with better distance calculation
   const checkCoinCollection = useCallback((position: Position, coinObjects: Coin[]) => {
-    const collectionRadius = 1; // Distance at which coins can be collected
+    const collectionRadius = 1.5; // Increased collection radius for easier pickup
     let collected = false;
     
     const updatedCoins = coinObjects.map(coin => {
       if (coin.collected) return coin;
       
+      // Calculate distance between character and coin
       const distance = Math.sqrt(
         Math.pow(position.x - coin.x, 2) + 
         Math.pow(position.y - coin.y, 2) + 
@@ -209,6 +213,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       );
       
       if (distance < collectionRadius) {
+        console.log("Collected coin at:", coin.x, coin.y, coin.z);
         collected = true;
         return { ...coin, collected: true };
       }
@@ -219,7 +224,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     return { updatedCoins, newCoinCollected: collected };
   }, []);
 
-  // Handle jumping physics
+  // Handle jumping and platform collision physics
   useEffect(() => {
     if (controls.isJumping) {
       const jumpHeight = 2;
@@ -242,9 +247,18 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           
           // Parabolic jump curve
           const height = startY + jumpHeight * Math.sin(jumpProgress * Math.PI);
+          
+          // Check for coin collection even during jump
+          const { updatedCoins, newCoinCollected } = checkCoinCollection(
+            { ...prev.position, y: height }, 
+            prev.coinObjects
+          );
+          
           return {
             ...prev,
             position: { ...prev.position, y: height },
+            coinObjects: updatedCoins,
+            coins: newCoinCollected ? prev.coins + 1 : prev.coins
           };
         });
       }, 16);
@@ -258,33 +272,72 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       
       const fallInterval = setInterval(() => {
         setControls((prev) => {
-          const fallProgress = (Date.now() - startTime) / fallDuration;
-          
-          // Check if character is on a platform
+          // Check if character is on a platform first
           const platformY = isOnPlatform(prev.position, prev.platforms);
           
-          if (fallProgress >= 1 || prev.position.y <= 0 || platformY !== null) {
+          // If we've found a platform to land on
+          if (platformY !== null) {
             clearInterval(fallInterval);
-            const landingY = platformY !== null ? platformY : 0;
-            console.log("Landing at y:", landingY);
+            console.log("Landing on platform at y:", platformY);
+            
+            // Check for coin collection at landing position
+            const { updatedCoins, newCoinCollected } = checkCoinCollection(
+              { ...prev.position, y: platformY }, 
+              prev.coinObjects
+            );
+            
+            return {
+              ...prev,
+              isFalling: false,
+              position: { ...prev.position, y: platformY },
+              coinObjects: updatedCoins,
+              coins: newCoinCollected ? prev.coins + 1 : prev.coins
+            };
+          }
+          
+          const fallProgress = (Date.now() - startTime) / fallDuration;
+          
+          if (fallProgress >= 1 || prev.position.y <= 0) {
+            clearInterval(fallInterval);
+            const landingY = 0;
+            console.log("Landing at ground y:", landingY);
+            
+            // Check for coin collection at landing position
+            const { updatedCoins, newCoinCollected } = checkCoinCollection(
+              { ...prev.position, y: landingY }, 
+              prev.coinObjects
+            );
+            
             return {
               ...prev,
               isFalling: false,
               position: { ...prev.position, y: landingY },
+              coinObjects: updatedCoins,
+              coins: newCoinCollected ? prev.coins + 1 : prev.coins
             };
           }
           
+          // Continue falling
           const height = Math.max(0, prev.position.y - 0.1);
+          
+          // Check for coin collection during fall
+          const { updatedCoins, newCoinCollected } = checkCoinCollection(
+            { ...prev.position, y: height }, 
+            prev.coinObjects
+          );
+          
           return {
             ...prev,
             position: { ...prev.position, y: height },
+            coinObjects: updatedCoins,
+            coins: newCoinCollected ? prev.coins + 1 : prev.coins
           };
         });
       }, 16);
       
       return () => clearInterval(fallInterval);
     }
-  }, [controls.isJumping, controls.isFalling, isOnPlatform]);
+  }, [controls.isJumping, controls.isFalling, isOnPlatform, checkCoinCollection]);
 
   // Set up event listeners
   useEffect(() => {
@@ -299,7 +352,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     };
   }, [handleKeyDown, handleKeyUp]);
 
-  // Movement system
+  // Movement system with platform collision check
   useEffect(() => {
     const moveSpeed = 0.1;
     const moveInterval = setInterval(() => {
@@ -359,6 +412,23 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           z: prev.position.z + zDelta,
         };
         
+        // Check if we're on a platform and adjust Y position to stay on it
+        // This prevents sliding off platforms
+        if (!prev.isJumping && !prev.isFalling && prev.position.y > 0) {
+          const platformY = isOnPlatform(newPosition, prev.platforms);
+          if (platformY !== null) {
+            newPosition.y = platformY;
+          } else {
+            // If we've moved off a platform, start falling
+            return {
+              ...prev,
+              position: { ...newPosition, y: prev.position.y },
+              rotation: newRotation,
+              isFalling: true
+            };
+          }
+        }
+        
         // Apply character's ability effects to movement
         let yDelta = 0;
         if (prev.isAbilityActive && superAbility === 'flying' && !prev.isJumping && !prev.isFalling) {
@@ -389,7 +459,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     }, 16); // ~60fps update rate
     
     return () => clearInterval(moveInterval);
-  }, [superAbility, checkCoinCollection]);
+  }, [superAbility, checkCoinCollection, isOnPlatform]);
 
   // Reset game controls
   const resetControls = () => {
