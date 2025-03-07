@@ -126,16 +126,16 @@
   }
 }
 
-/* Hero Ability Effects */
-.hero-flying {
+/* Hero Ability Effects - modified to only affect the 3D model elements, not the screen */
+.hero-flying .character-model {
   @apply animate-float;
 }
 
-.hero-strength {
+.hero-strength .character-model {
   @apply animate-pulse;
 }
 
-.hero-magic {
+.hero-magic .character-model {
   @apply animate-glow;
 }
 

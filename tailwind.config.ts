@@ -82,11 +82,11 @@ export default {
         },
         "pulse": {
           "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.1)" },
+          "50%": { transform: "scale(1.05)" }, // Reduced intensity
         },
         "glow": {
-          "0%, 100%": { filter: "brightness(1)" },
-          "50%": { filter: "brightness(1.5) drop-shadow(0 0 15px rgba(255, 255, 255, 0.7))" },
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "1.1" }, // Reduced intensity and removed brightness/drop-shadow
         },
         "fade-in": {
           "0%": { opacity: "0" },
