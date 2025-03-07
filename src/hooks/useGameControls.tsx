@@ -21,6 +21,7 @@ type Platform = {
   width: number;
   height: number;
   depth: number;
+  broken?: boolean; // Added to track broken platforms
 };
 
 type Coin = {
@@ -128,17 +129,25 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           movement: { ...prev.movement, right: true },
         }));
         break;
-      case 'KeyQ': // Added Q key for flying upward
-        setControls((prev) => ({
-          ...prev,
-          movement: { ...prev.movement, up: true },
-        }));
-        // Play flying sound if ability is active and flying
-        if (controls.isAbilityActive && superAbility === 'flying') {
+      case 'KeyQ': // Changed from flying upward to activating ability
+        // If flying ability is active, use Q for flying up
+        if (superAbility === 'flying' && controls.isAbilityActive) {
+          setControls((prev) => ({
+            ...prev,
+            movement: { ...prev.movement, up: true },
+          }));
           playFlyingSound();
+        } 
+        // Otherwise, Q toggles the ability for all ability types
+        else if (superAbility) {
+          console.log("Toggling ability:", superAbility);
+          setControls((prev) => ({
+            ...prev,
+            isAbilityActive: !prev.isAbilityActive,
+          }));
         }
         break;
-      case 'KeyE': // Added E key for flying downward
+      case 'KeyE': // E key is still used for flying downward
         setControls((prev) => ({
           ...prev,
           movement: { ...prev.movement, down: true },
@@ -154,14 +163,6 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           console.log("Jump initiated");
           playJumpSound(); // Play jump sound when jumping
           setControls((prev) => ({ ...prev, isJumping: true }));
-        }
-        // Toggle super ability
-        if (superAbility) {
-          console.log("Toggling ability:", superAbility);
-          setControls((prev) => ({
-            ...prev,
-            isAbilityActive: !prev.isAbilityActive,
-          }));
         }
         break;
       default:
@@ -199,11 +200,13 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           movement: { ...prev.movement, right: false },
         }));
         break;
-      case 'KeyQ': // Added Q key release
-        setControls((prev) => ({
-          ...prev,
-          movement: { ...prev.movement, up: false },
-        }));
+      case 'KeyQ': // Only reset up movement if flying ability is active
+        if (superAbility === 'flying' && controls.isAbilityActive) {
+          setControls((prev) => ({
+            ...prev,
+            movement: { ...prev.movement, up: false },
+          }));
+        }
         break;
       case 'KeyE': // Added E key release
         setControls((prev) => ({
@@ -214,13 +217,16 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       default:
         break;
     }
-  }, []);
+  }, [superAbility, controls.isAbilityActive]);
 
   // Check if character is on a platform
   const isOnPlatform = useCallback((position: Position, platforms: Platform[]) => {
     const characterRadius = 0.5; // approximate character width/2
     
     for (const platform of platforms) {
+      // Skip broken platforms
+      if (platform.broken) continue;
+      
       // Check if character is within the x-z bounds of the platform
       const withinX = position.x >= platform.x - platform.width/2 - characterRadius && 
                       position.x <= platform.x + platform.width/2 + characterRadius;
@@ -235,6 +241,26 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       }
     }
     return null; // Not on any platform
+  }, []);
+
+  // Check if character is near a platform (for Strength ability)
+  const isNearPlatform = useCallback((position: Position, platforms: Platform[]) => {
+    const proximityRange = 2; // Distance to consider "near" a platform
+    
+    return platforms.findIndex(platform => {
+      if (platform.broken) return false;
+      
+      // Skip the ground platform (can't break the main ground)
+      if (platform.width >= 50) return false;
+      
+      const distanceX = Math.abs(position.x - platform.x);
+      const distanceY = Math.abs(position.y - platform.y);
+      const distanceZ = Math.abs(position.z - platform.z);
+      
+      return distanceX < proximityRange && 
+             distanceY < proximityRange && 
+             distanceZ < proximityRange;
+    });
   }, []);
 
   // Check coin collection
@@ -345,10 +371,35 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     };
   }, [handleKeyDown, handleKeyUp]);
 
+  // Handle platform destruction with Strength ability
+  useEffect(() => {
+    if (controls.isAbilityActive && superAbility === 'strength') {
+      const platformIndex = isNearPlatform(controls.position, controls.platforms);
+      
+      if (platformIndex >= 0) {
+        console.log(`Breaking platform at index ${platformIndex}`);
+        
+        setControls(prev => {
+          const updatedPlatforms = [...prev.platforms];
+          updatedPlatforms[platformIndex] = {
+            ...updatedPlatforms[platformIndex],
+            broken: true
+          };
+          
+          return {
+            ...prev,
+            platforms: updatedPlatforms
+          };
+        });
+      }
+    }
+  }, [controls.isAbilityActive, controls.position, superAbility, isNearPlatform]);
+
   // Movement system
   useEffect(() => {
     const moveSpeed = 0.1;
     const flySpeed = 0.15;
+    const coinAttractionSpeed = 0.2; // Speed at which coins move toward player
     
     const moveInterval = setInterval(() => {
       setControls((prev) => {
@@ -364,14 +415,41 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           console.log("Coin collected! New count:", prev.coins + 1);
         }
         
+        // Apply magic ability - attract coins
+        let magicUpdatedCoins = [...updatedCoins];
+        if (prev.isAbilityActive && superAbility === 'magic') {
+          magicUpdatedCoins = updatedCoins.map(coin => {
+            if (coin.collected) return coin;
+            
+            // Calculate direction vector from coin to player
+            const dirX = prev.position.x - coin.x;
+            const dirY = prev.position.y - coin.y;
+            const dirZ = prev.position.z - coin.z;
+            
+            // Normalize the direction vector
+            const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+            if (length > 0) {
+              // Move coin towards player
+              return {
+                ...coin,
+                x: coin.x + (dirX / length) * coinAttractionSpeed,
+                y: coin.y + (dirY / length) * coinAttractionSpeed,
+                z: coin.z + (dirZ / length) * coinAttractionSpeed
+              };
+            }
+            
+            return coin;
+          });
+        }
+        
         // If not moving and not collecting coins, stop footstep sound and return previous state
         if (!forward && !backward && !left && !right && !up && !down) {
           stopFootstepSound();
-          if (newCoinCollected) {
+          if (newCoinCollected || prev.isAbilityActive) {
             return {
               ...prev,
-              coinObjects: updatedCoins,
-              coins: prev.coins + 1
+              coinObjects: magicUpdatedCoins,
+              coins: newCoinCollected ? prev.coins + 1 : prev.coins
             };
           }
           return prev;
@@ -456,7 +534,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           ...prev,
           position: newPosition,
           rotation: newRotation,
-          coinObjects: updatedCoins,
+          coinObjects: magicUpdatedCoins,
           coins: newCoinCollected ? prev.coins + 1 : prev.coins
         };
       });
@@ -466,7 +544,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       clearInterval(moveInterval);
       stopFootstepSound();
     };
-  }, [superAbility, checkCoinCollection, isOnPlatform]);
+  }, [superAbility, checkCoinCollection, isOnPlatform, isNearPlatform]);
 
   // Reset game controls
   const resetControls = () => {

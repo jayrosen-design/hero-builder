@@ -27,6 +27,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   const animationFrameRef = useRef<number | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
   const coinsRef = useRef<THREE.Object3D[]>([]);
+  const platformsRef = useRef<THREE.Mesh[]>([]);
   
   const cleanupAnimationFrame = () => {
     if (animationFrameRef.current !== null) {
@@ -90,21 +91,60 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(ground);
     groundRef.current = ground;
     
-    addPlatform(scene, -5, 0, -10, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
-      color: 0x8B4513,
-      roughness: 0.8,
-      metalness: 0.2
-    }));
-    addPlatform(scene, 8, 2, -8, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
-      color: 0x8B4513,
-      roughness: 0.8,
-      metalness: 0.2
-    }));
-    addPlatform(scene, 0, 4, -15, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
-      color: 0x8B4513,
-      roughness: 0.8,
-      metalness: 0.2
-    }));
+    // Add platforms and store references to them
+    platformsRef.current = [];
+    
+    if (controls && controls.platforms) {
+      controls.platforms.forEach((platformData, index) => {
+        // Skip the main ground platform for rendering purposes
+        if (platformData.width >= 50) return;
+        
+        // Skip broken platforms
+        if (platformData.broken) return;
+        
+        const platform = addPlatform(
+          scene, 
+          platformData.x, 
+          platformData.y, 
+          platformData.z, 
+          platformData.width, 
+          platformData.height, 
+          platformData.depth, 
+          new THREE.MeshStandardMaterial({ 
+            color: 0x8B4513,
+            roughness: 0.8,
+            metalness: 0.2
+          })
+        );
+        
+        platformsRef.current.push(platform);
+      });
+    } else {
+      // Add default platforms if no controls provided
+      platformsRef.current.push(
+        addPlatform(scene, -5, 0, -10, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
+          color: 0x8B4513,
+          roughness: 0.8,
+          metalness: 0.2
+        }))
+      );
+      
+      platformsRef.current.push(
+        addPlatform(scene, 8, 2, -8, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
+          color: 0x8B4513,
+          roughness: 0.8,
+          metalness: 0.2
+        }))
+      );
+      
+      platformsRef.current.push(
+        addPlatform(scene, 0, 4, -15, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
+          color: 0x8B4513,
+          roughness: 0.8,
+          metalness: 0.2
+        }))
+      );
+    }
     
     if (controls && controls.coinObjects) {
       addCoins(scene, controls.coinObjects);
@@ -127,6 +167,10 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         
         if (controls.coinObjects) {
           updateCoins(controls.coinObjects);
+        }
+        
+        if (controls.platforms) {
+          updatePlatforms(controls.platforms);
         }
         
         const cameraOffset = new THREE.Vector3(0, 2, 5);
@@ -205,6 +249,35 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     platform.castShadow = true;
     platform.receiveShadow = true;
     scene.add(platform);
+    return platform;
+  }
+  
+  function updatePlatforms(platformsData: any[]) {
+    // For each platform in the controls data
+    platformsData.forEach((platformData, index) => {
+      // Skip the ground platform
+      if (platformData.width >= 50) return;
+      
+      // Find the corresponding mesh in our references
+      const platformIndex = platformsRef.current.findIndex(platform => {
+        const position = platform.position;
+        return (
+          Math.abs(position.x - platformData.x) < 0.1 &&
+          Math.abs(position.y - platformData.y) < 0.1 &&
+          Math.abs(position.z - platformData.z) < 0.1
+        );
+      });
+      
+      // If the platform is broken and we have a mesh reference, remove it
+      if (platformData.broken && platformIndex >= 0) {
+        const platform = platformsRef.current[platformIndex];
+        if (sceneRef.current && platform.parent === sceneRef.current) {
+          sceneRef.current.remove(platform);
+          // Remove from our references array
+          platformsRef.current = platformsRef.current.filter((_, i) => i !== platformIndex);
+        }
+      }
+    });
   }
   
   function addCoins(scene: THREE.Scene, coinObjects: any[]) {
@@ -235,6 +308,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     coinObjects.forEach(coinData => {
       const coin = coinsRef.current.find(c => c.userData.id === coinData.id);
       if (coin) {
+        // Update position if the coin is being attracted by magic
+        coin.position.set(coinData.x, coinData.y, coinData.z);
         coin.visible = !coinData.collected;
       }
     });

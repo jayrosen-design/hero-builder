@@ -41,7 +41,17 @@ const Index = () => {
     // Force a resize event to ensure Three.js canvas renders correctly
     window.dispatchEvent(new Event('resize'));
     
-    toast.info("Game started! Use WASD to move, SPACE to jump, Q to fly up, and E to fly down when ability is active.");
+    let abilityInstructions = '';
+    
+    if (character.superAbility === 'flying') {
+      abilityInstructions = 'Q to activate flying and fly up, E to fly down';
+    } else if (character.superAbility === 'strength') {
+      abilityInstructions = 'Q to activate strength and break nearby platforms';
+    } else if (character.superAbility === 'magic') {
+      abilityInstructions = 'Q to activate magic and attract coins';
+    }
+    
+    toast.info(`Game started! Use WASD to move, SPACE to jump. ${abilityInstructions}`);
   };
 
   const handleBackToCustomization = () => {
@@ -52,6 +62,22 @@ const Index = () => {
   };
 
   console.log("Index rendering with gameStarted:", gameStarted, "character:", character);
+  
+  // Helper function to get ability-specific instructions
+  const getAbilityInstructions = () => {
+    if (!character.superAbility) return null;
+    
+    switch (character.superAbility) {
+      case 'flying':
+        return 'Q to activate flying and fly up, E to fly down';
+      case 'strength':
+        return 'Q to activate strength and break nearby platforms';
+      case 'magic':
+        return 'Q to activate magic and attract coins';
+      default:
+        return null;
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-hero-base overflow-hidden">
@@ -110,9 +136,10 @@ const Index = () => {
                   <h2 className="text-xl font-semibold">Game Controls</h2>
                   <p className="text-sm text-hero-muted">
                     Use WASD or arrow keys to move<br />
-                    SPACE to jump and activate ability<br />
+                    SPACE to jump<br />
+                    Q to activate your ability<br />
                     {character.superAbility === 'flying' && (
-                      <>Q to fly up, E to fly down</>
+                      <>When flying: Q to fly up, E to fly down</>
                     )}
                   </p>
                   
@@ -152,6 +179,9 @@ const Index = () => {
             <div>
               {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
             </div>
+            <div>
+              Ability: {controls.isAbilityActive ? "Active" : "Inactive"}
+            </div>
           </div>
         </>
       )}
@@ -159,7 +189,11 @@ const Index = () => {
       {/* Footer - always show */}
       <footer className="glass-panel py-3 px-6">
         <div className="container mx-auto text-center text-xs text-hero-muted">
-          <p>{gameStarted ? 'Move your hero with WASD keys! Use Q to fly up and E to fly down when flying ability is active!' : 'Create your custom superhero and test their abilities in the game!'}</p>
+          <p>
+            {gameStarted 
+              ? `Press Q to activate your ${character.superAbility || 'ability'}! ${getAbilityInstructions() || ''}`
+              : 'Create your custom superhero and test their abilities in the game!'}
+          </p>
         </div>
       </footer>
     </div>
