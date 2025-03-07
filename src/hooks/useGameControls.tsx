@@ -39,6 +39,8 @@ type GameControls = {
     backward: boolean;
     left: boolean;
     right: boolean;
+    up: boolean;    // Added for Q key (fly up)
+    down: boolean;  // Added for E key (fly down)
   };
 };
 
@@ -80,6 +82,8 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       backward: false,
       left: false,
       right: false,
+      up: false,    // Added for Q key
+      down: false,  // Added for E key
     },
   });
 
@@ -116,6 +120,18 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         setControls((prev) => ({
           ...prev,
           movement: { ...prev.movement, right: true },
+        }));
+        break;
+      case 'KeyQ': // Added Q key for flying upward
+        setControls((prev) => ({
+          ...prev,
+          movement: { ...prev.movement, up: true },
+        }));
+        break;
+      case 'KeyE': // Added E key for flying downward
+        setControls((prev) => ({
+          ...prev,
+          movement: { ...prev.movement, down: true },
         }));
         break;
       case 'Space':
@@ -166,6 +182,18 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         setControls((prev) => ({
           ...prev,
           movement: { ...prev.movement, right: false },
+        }));
+        break;
+      case 'KeyQ': // Added Q key release
+        setControls((prev) => ({
+          ...prev,
+          movement: { ...prev.movement, up: false },
+        }));
+        break;
+      case 'KeyE': // Added E key release
+        setControls((prev) => ({
+          ...prev,
+          movement: { ...prev.movement, down: false },
         }));
         break;
       default:
@@ -303,9 +331,11 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
   // Movement system
   useEffect(() => {
     const moveSpeed = 0.1;
+    const flySpeed = 0.15; // A bit faster for vertical flying movement
+    
     const moveInterval = setInterval(() => {
       setControls((prev) => {
-        const { forward, backward, left, right } = prev.movement;
+        const { forward, backward, left, right, up, down } = prev.movement;
         
         // Check for coin collection even when not moving
         const { updatedCoins, newCoinCollected } = checkCoinCollection(
@@ -318,7 +348,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         }
         
         // If not moving and not collecting coins, just return the previous state with updated coins
-        if (!forward && !backward && !left && !right && !prev.isAbilityActive) {
+        if (!forward && !backward && !left && !right && !up && !down && !prev.isAbilityActive) {
           if (newCoinCollected) {
             return {
               ...prev,
@@ -338,10 +368,6 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         if (forward) {
           zDelta -= moveSpeed;
           newRotation = 0;
-          // When flying and moving forward, also move up
-          if (prev.isAbilityActive && superAbility === 'flying') {
-            yDelta += 0.05; // Ascend when flying forward
-          }
         }
         if (backward) {
           zDelta += moveSpeed;
@@ -354,6 +380,16 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         if (right) {
           xDelta += moveSpeed;
           newRotation = -Math.PI * 0.5;
+        }
+        
+        // Apply flying vertical controls when ability is active
+        if (prev.isAbilityActive && superAbility === 'flying') {
+          if (up) {
+            yDelta += flySpeed; // Q key for flying up
+          }
+          if (down) {
+            yDelta -= flySpeed; // E key for flying down
+          }
         }
         
         // Diagonal movement
@@ -371,19 +407,19 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         
         // Apply character's ability effects to movement
         if (prev.isAbilityActive && superAbility === 'flying' && !prev.isJumping && !prev.isFalling) {
-          // When flying and not moving forward, hover in place
-          if (!forward) {
-            newPosition.y = Math.max(newPosition.y, 0.5); // Maintain minimum hover height
+          // Maintain minimum hover height when flying
+          if (newPosition.y < 0.5) {
+            newPosition.y = 0.5;
           }
           
           // Max height limit for flying
-          if (newPosition.y > 5) {
-            newPosition.y = 5;
+          if (newPosition.y > 10) { // Increased max height for more flying freedom
+            newPosition.y = 10;
           }
         }
         
         // Console log movement for debugging
-        if (forward || backward || left || right) {
+        if (forward || backward || left || right || up || down) {
           console.log(`Moving: x:${xDelta.toFixed(2)} y:${yDelta.toFixed(2)} z:${zDelta.toFixed(2)} rot:${(newRotation * 180 / Math.PI).toFixed(0)}°`);
         }
         
@@ -417,6 +453,8 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         backward: false,
         left: false,
         right: false,
+        up: false,
+        down: false,
       },
     });
   };
