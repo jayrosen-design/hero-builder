@@ -381,7 +381,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
           });
           const cape = new THREE.Mesh(capeGeometry, capeMaterial);
           cape.position.set(0, 1.1, 0.4);
-          cape.rotation.x = Math.PI / 6;
+          cape.rotation.x = -Math.PI / 6;
           characterRef.current.add(cape);
           break;
           
