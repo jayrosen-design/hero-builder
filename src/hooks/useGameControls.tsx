@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
-import { playCoinSound, playJumpSound } from '../utils/soundEffects';
+import { playCoinSound, playJumpSound, playFlyingSound } from '../utils/soundEffects';
 
 type Position = {
   x: number;
@@ -127,12 +127,20 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           ...prev,
           movement: { ...prev.movement, up: true },
         }));
+        // Play flying sound if ability is active and flying
+        if (controls.isAbilityActive && superAbility === 'flying') {
+          playFlyingSound();
+        }
         break;
       case 'KeyE': // Added E key for flying downward
         setControls((prev) => ({
           ...prev,
           movement: { ...prev.movement, down: true },
         }));
+        // Play flying sound if ability is active and flying
+        if (controls.isAbilityActive && superAbility === 'flying') {
+          playFlyingSound();
+        }
         break;
       case 'Space':
         // Handle jump if not already jumping
@@ -153,7 +161,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
       default:
         break;
     }
-  }, [controls.isJumping, controls.isFalling, superAbility]);
+  }, [controls.isJumping, controls.isFalling, superAbility, controls.isAbilityActive]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     switch (e.code) {
