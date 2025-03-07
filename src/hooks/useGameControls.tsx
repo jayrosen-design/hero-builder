@@ -431,10 +431,31 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         
         // Apply character's ability effects to movement
         let yDelta = 0;
-        if (prev.isAbilityActive && superAbility === 'flying' && !prev.isJumping && !prev.isFalling) {
-          yDelta = 0.05; // Gradually lift the character when flying
-          if (prev.position.y > 3) yDelta = 0; // Max height
+        if (prev.isAbilityActive && superAbility === 'flying') {
+          // Flying ability - gradual lift when pressing forward
+          if (forward) {
+            // When flying and pressing W, move upward more significantly
+            yDelta = 0.05;
+            if (prev.position.y > 10) yDelta = 0; // Max height cap
+          } else {
+            // When just flying (ability active but not pressing W), maintain height
+            yDelta = 0;
+          }
+          // Apply vertical movement
           newPosition.y += yDelta;
+          
+          // Flying ability lets you stay in air (don't fall)
+          if (prev.isFalling) {
+            // When flying, you don't fall
+            return {
+              ...prev,
+              position: newPosition,
+              rotation: newRotation,
+              isFalling: false,
+              coinObjects: updatedCoins,
+              coins: newCoinCollected ? prev.coins + 1 : prev.coins
+            };
+          }
         }
         
         // Check for coin collection
