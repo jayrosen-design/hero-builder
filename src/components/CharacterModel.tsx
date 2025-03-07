@@ -380,7 +380,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
             opacity: 0.9,
           });
           const cape = new THREE.Mesh(capeGeometry, capeMaterial);
-          cape.position.set(0, 1.1, 0.4);
+          cape.position.set(0, 0.6, 0.4);
           cape.rotation.x = -Math.PI / 6;
           characterRef.current.add(cape);
           break;
@@ -439,3 +439,4 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
 };
 
 export default CharacterModel;
+
