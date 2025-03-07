@@ -270,6 +270,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       
       // If the platform is broken and we have a mesh reference, remove it
       if (platformData.broken && platformIndex >= 0) {
+        console.log("Removing broken platform from scene");
         const platform = platformsRef.current[platformIndex];
         if (sceneRef.current && platform.parent === sceneRef.current) {
           sceneRef.current.remove(platform);

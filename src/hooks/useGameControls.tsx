@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
 import { 
@@ -129,31 +130,32 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           movement: { ...prev.movement, right: true },
         }));
         break;
-      case 'KeyQ': // Changed from flying upward to activating ability
-        // If flying ability is active, use Q for flying up
-        if (superAbility === 'flying' && controls.isAbilityActive) {
-          setControls((prev) => ({
-            ...prev,
-            movement: { ...prev.movement, up: true },
-          }));
-          playFlyingSound();
-        } 
-        // Otherwise, Q toggles the ability for all ability types
-        else if (superAbility) {
+      case 'KeyQ': // Q key is ONLY for activating abilities
+        console.log("Q key pressed, superAbility:", superAbility);
+        if (superAbility) {
           console.log("Toggling ability:", superAbility);
           setControls((prev) => ({
             ...prev,
             isAbilityActive: !prev.isAbilityActive,
           }));
+          
+          // For flying, we also set the up movement to true
+          if (superAbility === 'flying') {
+            setControls((prev) => ({
+              ...prev,
+              movement: { ...prev.movement, up: true },
+            }));
+            playFlyingSound();
+          }
         }
         break;
-      case 'KeyE': // E key is still used for flying downward
-        setControls((prev) => ({
-          ...prev,
-          movement: { ...prev.movement, down: true },
-        }));
-        // Play flying sound if ability is active and flying
-        if (controls.isAbilityActive && superAbility === 'flying') {
+      case 'KeyE': // E key is used for flying downward
+        if (superAbility === 'flying' && controls.isAbilityActive) {
+          setControls((prev) => ({
+            ...prev,
+            movement: { ...prev.movement, down: true },
+          }));
+          // Play flying sound if ability is active and flying
           playFlyingSound();
         }
         break;
@@ -418,6 +420,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         // Apply magic ability - attract coins
         let magicUpdatedCoins = [...updatedCoins];
         if (prev.isAbilityActive && superAbility === 'magic') {
+          console.log("Magic ability active - attracting coins");
           magicUpdatedCoins = updatedCoins.map(coin => {
             if (coin.collected) return coin;
             
