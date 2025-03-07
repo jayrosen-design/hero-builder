@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { CharacterState } from '../hooks/useCharacterCustomization';
@@ -51,7 +50,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       1000
     );
     
-    // Use the same camera position for both game mode and customization
     camera.position.set(0, 2, 7);
     camera.lookAt(0, 1, 0);
     
@@ -91,18 +89,22 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     scene.add(ground);
     groundRef.current = ground;
     
-    // Add platform decorations to the scene regardless of mode
-    const platformMaterial = new THREE.MeshStandardMaterial({ 
+    addPlatform(scene, -5, 0, -10, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
       color: 0x8B4513,
       roughness: 0.8,
       metalness: 0.2
-    });
+    }));
+    addPlatform(scene, 8, 2, -8, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
+      color: 0x8B4513,
+      roughness: 0.8,
+      metalness: 0.2
+    }));
+    addPlatform(scene, 0, 4, -15, 5, 0.5, 5, new THREE.MeshStandardMaterial({ 
+      color: 0x8B4513,
+      roughness: 0.8,
+      metalness: 0.2
+    }));
     
-    addPlatform(scene, -5, 0, -10, 5, 0.5, 5, platformMaterial);
-    addPlatform(scene, 8, 2, -8, 5, 0.5, 5, platformMaterial);
-    addPlatform(scene, 0, 4, -15, 5, 0.5, 5, platformMaterial);
-    
-    // Add coins to the scene if controls exist
     if (controls && controls.coinObjects) {
       addCoins(scene, controls.coinObjects);
     }
@@ -115,7 +117,6 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
       }
       
       if (controls && characterRef.current && cameraRef.current) {
-        // Update character position based on controls
         characterRef.current.position.set(
           controls.position.x,
           controls.position.y, 
@@ -123,20 +124,17 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         );
         characterRef.current.rotation.y = controls.rotation;
         
-        // Update coin visibility based on collection status
         if (controls.coinObjects) {
           updateCoins(controls.coinObjects);
         }
         
-        // Follow the character with camera
-        const cameraOffset = new THREE.Vector3(0, 2, 5); // Camera follows character from behind
+        const cameraOffset = new THREE.Vector3(0, 2, 5);
         const characterPosition = new THREE.Vector3(
           controls.position.x,
           controls.position.y,
           controls.position.z
         );
         
-        // Position camera to follow character
         cameraRef.current.position.copy(characterPosition).add(cameraOffset);
         cameraRef.current.lookAt(
           controls.position.x,
@@ -145,12 +143,10 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
         );
       }
       
-      // Animate coins to rotate and float
       if (coinsRef.current.length > 0) {
         coinsRef.current.forEach((coin, index) => {
           if (coin.visible) {
             coin.rotation.y += 0.02;
-            // Add subtle floating animation
             coin.position.y += Math.sin(Date.now() * 0.002 + index) * 0.001;
           }
         });
@@ -211,10 +207,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
   }
   
   function addCoins(scene: THREE.Scene, coinObjects: any[]) {
-    // Clear previous coins
     coinsRef.current = [];
     
-    // Create a coin geometry and material to reuse
     const coinGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.05, 16);
     const coinMaterial = new THREE.MeshStandardMaterial({
       color: 0xFFD700,
@@ -226,7 +220,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
     
     coinObjects.forEach((coinData, index) => {
       const coin = new THREE.Mesh(coinGeometry, coinMaterial);
-      coin.rotation.x = Math.PI / 2; // Make coin face up
+      coin.rotation.x = Math.PI / 2;
       coin.position.set(coinData.x, coinData.y, coinData.z);
       coin.castShadow = true;
       coin.visible = !coinData.collected;
@@ -386,10 +380,8 @@ const CharacterModel: React.FC<CharacterModelProps> = ({
             opacity: 0.9,
           });
           const cape = new THREE.Mesh(capeGeometry, capeMaterial);
-          // Changed position to be behind the character by making z positive
-          cape.position.set(0, 0.4, 0.4); 
-          // Adjust rotation to flow naturally from the back
-          cape.rotation.x = Math.PI / 10;
+          cape.position.set(0, 1.1, 0.4);
+          cape.rotation.x = Math.PI / 6;
           characterRef.current.add(cape);
           break;
           
