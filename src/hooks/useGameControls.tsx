@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
 
@@ -411,23 +410,12 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           y: prev.position.y,
           z: prev.position.z + zDelta,
         };
-        
-        // Check if we're on a platform and adjust Y position to stay on it
-        // This prevents sliding off platforms
-        if (!prev.isJumping && !prev.isFalling && prev.position.y > 0) {
-          const platformY = isOnPlatform(newPosition, prev.platforms);
-          if (platformY !== null) {
-            newPosition.y = platformY;
-          } else {
-            // If we've moved off a platform, start falling
-            return {
-              ...prev,
-              position: { ...newPosition, y: prev.position.y },
-              rotation: newRotation,
-              isFalling: true
-            };
-          }
-        }
+
+        // Check for coin collection first
+        const { updatedCoins, newCoinCollected } = checkCoinCollection(
+          newPosition, 
+          prev.coinObjects
+        );
         
         // Apply character's ability effects to movement
         let yDelta = 0;
@@ -458,11 +446,24 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           }
         }
         
-        // Check for coin collection
-        const { updatedCoins, newCoinCollected } = checkCoinCollection(
-          newPosition, 
-          prev.coinObjects
-        );
+        // Check if we're on a platform and adjust Y position to stay on it
+        // This prevents sliding off platforms
+        if (!prev.isJumping && !prev.isFalling && prev.position.y > 0) {
+          const platformY = isOnPlatform(newPosition, prev.platforms);
+          if (platformY !== null) {
+            newPosition.y = platformY;
+          } else {
+            // If we've moved off a platform, start falling
+            return {
+              ...prev,
+              position: { ...newPosition, y: prev.position.y },
+              rotation: newRotation,
+              isFalling: true,
+              coinObjects: updatedCoins,
+              coins: newCoinCollected ? prev.coins + 1 : prev.coins
+            };
+          }
+        }
         
         // Console log movement for debugging
         if (forward || backward || left || right) {
