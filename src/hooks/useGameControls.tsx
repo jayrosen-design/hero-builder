@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
-import { playCoinSound, playJumpSound, playFlyingSound } from '../utils/soundEffects';
+import { playCoinSound, playJumpSound, playFlyingSound, playFootstepSound } from '../utils/soundEffects';
 
 type Position = {
   x: number;
@@ -429,6 +429,15 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
           }
         }
         
+        // Play footstep sound when moving on the ground (not jumping, not flying)
+        const isGrounded = prev.position.y <= 0.1 || isOnPlatform(prev.position, prev.platforms) !== null;
+        const isMovingHorizontally = (forward || backward || left || right);
+        
+        if (isGrounded && isMovingHorizontally && !prev.isJumping && !prev.isFalling 
+            && (!prev.isAbilityActive || superAbility !== 'flying')) {
+          playFootstepSound();
+        }
+        
         // Console log movement for debugging
         if (forward || backward || left || right || up || down) {
           console.log(`Moving: x:${xDelta.toFixed(2)} y:${yDelta.toFixed(2)} z:${zDelta.toFixed(2)} rot:${(newRotation * 180 / Math.PI).toFixed(0)}°`);
@@ -445,7 +454,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
     }, 16); // ~60fps update rate
     
     return () => clearInterval(moveInterval);
-  }, [superAbility, checkCoinCollection]);
+  }, [superAbility, checkCoinCollection, isOnPlatform]);
 
   // Reset game controls
   const resetControls = () => {
