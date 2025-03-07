@@ -122,14 +122,6 @@ const Index = () => {
                       </div>
                     </div>
                   )}
-                  
-                  {/* Coin counter in game controls panel */}
-                  <div className="flex items-center justify-center mt-4">
-                    <Badge variant="default" className="flex items-center gap-2 px-3 py-2 text-base font-bold bg-amber-500 text-amber-950">
-                      <Coins className="w-5 h-5" /> 
-                      <span>× {controls.coins}</span>
-                    </Badge>
-                  </div>
                 </div>
               </div>
             )}
@@ -149,6 +141,14 @@ const Index = () => {
             <div>
               {controls.isJumping ? "Jumping" : controls.isFalling ? "Falling" : "Grounded"}
             </div>
+          </div>
+          
+          {/* Coin Counter */}
+          <div className="absolute top-20 right-4 z-30">
+            <Badge variant="default" className="flex items-center gap-2 px-3 py-2 text-base font-bold bg-amber-500 text-amber-950">
+              <Coins className="w-5 h-5" /> 
+              <span>× {controls.coins}</span>
+            </Badge>
           </div>
         </>
       )}
