@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SuperAbility } from './useCharacterCustomization';
-import { playCoinSound } from '../utils/soundEffects';
+import { playCoinSound, playJumpSound } from '../utils/soundEffects';
 
 type Position = {
   x: number;
@@ -138,6 +138,7 @@ export const useGameControls = (superAbility: SuperAbility | null) => {
         // Handle jump if not already jumping
         if (!controls.isJumping && !controls.isFalling) {
           console.log("Jump initiated");
+          playJumpSound(); // Play jump sound when jumping
           setControls((prev) => ({ ...prev, isJumping: true }));
         }
         // Toggle super ability
